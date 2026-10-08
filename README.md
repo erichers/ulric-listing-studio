@@ -30,7 +30,7 @@ Light desktop, then dark desktop, then the phone widths.
 
 ## Motion
 
-Pages enter with a short fade and a 12px rise, staggered when a section has several parts. Route changes crossfade. Counts on the desk and the monthly payment run up once they are on screen. The 14-day lead chart is a row of equal columns on a baseline. Days with no leads stay empty, and the columns grow up from that line. The payment section draws a small diagram of price, down payment, loan, then tax, insurance, and HOA.
+Pages enter with a short fade and a 12px rise, staggered when a section has several parts. Route changes crossfade. Counts on the desk and the monthly payment run up once they are on screen. The 14-day lead chart is about 150px tall: thin columns with a small rounded top, a faint baseline, and 12px labels. Days with no leads stay empty, the columns grow up from the baseline, and a hover shows the date and count. The payment section draws a small diagram of price, down payment, loan, then tax, insurance, and HOA.
 
 The listing page also has a daylight study: a simple house massing, not a survey of the lot. three.js loads only on that page, the pixel ratio stays at 2 or below, and the sun pauses when the study is off screen. If motion is reduced, or WebGL is unavailable, a still elevation is shown instead. The theme control fades color over about 400ms.
 

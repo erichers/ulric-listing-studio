@@ -4,7 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { ApiService, appUrl } from '../core/api.service';
 import { fact, money, sqft, when } from '../core/format';
 import { CountUp } from '../motion/count';
-import { Dashboard, LeadStatus } from '../core/models';
+import { Dashboard, DayCount, LeadStatus } from '../core/models';
 
 interface CalendarCell {
   day: number;
@@ -70,6 +70,9 @@ export class DashboardPage implements OnInit {
   });
 
   readonly chartDrawn = signal(false);
+  readonly tip = signal<DayCount | null>(null);
+  readonly tipX = signal(0);
+  readonly tipY = signal(0);
   private readonly leadChart = viewChild<ElementRef<HTMLElement>>('leadChart');
   readonly barMax = computed(() => Math.max(1, ...(this.data()?.leadsByDay.map((day) => day.count) ?? [1])));
   readonly leadChartLabel = computed(() => {
@@ -119,7 +122,29 @@ export class DashboardPage implements OnInit {
     if (count <= 0) {
       return 0;
     }
-    return Math.max(8, Math.round((count / this.barMax()) * 56));
+    return Math.max(4, Math.round((count / this.barMax()) * 108));
+  }
+
+  showTip(day: DayCount, event: Event): void {
+    const slot = event.currentTarget as HTMLElement;
+    const plot = slot.parentElement;
+    if (!plot) {
+      return;
+    }
+    const slotBox = slot.getBoundingClientRect();
+    const plotBox = plot.getBoundingClientRect();
+    const half = 52;
+    const x = Math.min(
+      plotBox.width - half,
+      Math.max(half, slotBox.left - plotBox.left + slotBox.width / 2),
+    );
+    this.tipX.set(x);
+    this.tipY.set(plotBox.height - this.leadBar(day.count) - 8);
+    this.tip.set(day);
+  }
+
+  hideTip(): void {
+    this.tip.set(null);
   }
 
   shortDay(iso: string): string {
