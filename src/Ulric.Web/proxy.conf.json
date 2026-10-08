@@ -1,0 +1,24 @@
+{
+  "/api": {
+    "target": "http://localhost:5080",
+    "secure": false
+  },
+  "/uploads": {
+    "target": "http://localhost:5080",
+    "secure": false
+  },
+  "/grokbot/asp/ulric-listing-studio/api": {
+    "target": "http://localhost:5080",
+    "secure": false,
+    "pathRewrite": {
+      "^/grokbot/asp/ulric-listing-studio": ""
+    }
+  },
+  "/grokbot/asp/ulric-listing-studio/uploads": {
+    "target": "http://localhost:5080",
+    "secure": false,
+    "pathRewrite": {
+      "^/grokbot/asp/ulric-listing-studio": ""
+    }
+  }
+}

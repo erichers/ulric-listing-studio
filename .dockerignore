@@ -1,0 +1,10 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/node_modules
+**/.angular
+**/dist
+**/*.db
+**/App_Data
+.env

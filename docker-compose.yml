@@ -1,0 +1,44 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ulric
+      MYSQL_USER: ulric
+      MYSQL_PASSWORD: ulric
+      MYSQL_ROOT_PASSWORD: ulric-root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ulric-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pulric"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ulric:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Database__Provider: MySql
+      Database__ServerVersion: AutoDetect
+      ConnectionStrings__MySql: Server=mysql;Port=3306;Database=ulric;User=ulric;Password=ulric
+      Storage__Root: /data/uploads
+      Geocoding__Enabled: "true"
+      Geocoding__UserAgent: UlricListingStudio/1.0 (+https://github.com/erichers/ulric-listing-studio)
+      Geocoding__BaseUrl: https://nominatim.openstreetmap.org
+      Geocoding__MinIntervalMs: "1100"
+      Notifier__Mode: log
+      Cors__Origins__0: http://localhost:8080
+    volumes:
+      - ulric-data:/data
+
+volumes:
+  ulric-data:
+  ulric-mysql:
