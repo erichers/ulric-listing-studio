@@ -1,0 +1,242 @@
+@if (loading()) {
+  <div class="wrap section">
+    <div class="skeleton hero-skel"></div>
+    <div class="skeleton line"></div>
+    <div class="skeleton line short"></div>
+  </div>
+} @else if (error()) {
+  <section class="wrap section">
+    <p class="eyebrow">Listing</p>
+    <h1>That page is not published.</h1>
+    <p role="alert">{{ error() }}</p>
+    <p><a routerLink="/">Back to Ulric studio</a></p>
+  </section>
+} @else if (listing(); as house) {
+  <article (keydown)="onKey($event)">
+    <app-hero [listing]="house" />
+    <div class="wide hero-actions">
+      <a class="btn" href="#showing">Schedule a showing</a>
+      <a class="btn btn-ghost" href="#ask">Ask a question</a>
+    </div>
+
+    <section class="wrap section">
+      <h2>The house</h2>
+      <p class="measure">{{ house.description }}</p>
+    </section>
+
+    @if (house.photos.length) {
+      <section class="wide section">
+        <h2 class="wrap-title">Photographs</h2>
+        <div class="gallery">
+          @for (photo of house.photos; track photo.id; let index = $index) {
+            <button type="button" class="shot" (click)="openLightbox(index, $event)">
+              <img [src]="photo.url" [alt]="photo.caption || house.street" [attr.loading]="index === 0 ? 'eager' : 'lazy'" />
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    @if (house.features.length) {
+      <section class="wrap section">
+        <h2>Features and amenities</h2>
+        <ul class="feature-list">
+          @for (feature of house.features; track feature) {
+            <li>{{ feature }}</li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="wrap section">
+      <h2>Map</h2>
+      @if (house.latitude != null && house.longitude != null) {
+        <div #map class="map-frame" role="region" aria-label="Map of the property"></div>
+        <p class="quiet">Map tiles © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors. The address is geocoded with Nominatim and the result is cached.</p>
+      } @else {
+        <p>The map appears after the address can be located.</p>
+      }
+    </section>
+
+    @if (house.neighborhood) {
+      <section class="wrap section">
+        <h2>The neighborhood</h2>
+        <p class="measure">{{ house.neighborhood }}</p>
+      </section>
+    }
+
+    <section class="wrap section" id="payment">
+      <h2>Monthly payment</h2>
+      <p class="quiet">Estimate only. A lender confirms the payment.</p>
+      <div class="mortgage">
+        <div class="form-grid">
+          <label class="field">Price<input type="number" min="0" [value]="price()" (input)="number('price', $event)" /></label>
+          <label class="field">Down payment<input type="number" min="0" [value]="down()" (input)="number('down', $event)" /></label>
+          <label class="field">Interest rate<input type="number" min="0" step="0.1" [value]="rate()" (input)="number('rate', $event)" /></label>
+          <label class="field">Term, years
+            <select [value]="term()" (change)="number('term', $event)">
+              <option value="15">15</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+            </select>
+          </label>
+          <label class="field">Property tax per year<input type="number" min="0" [value]="tax()" (input)="number('tax', $event)" /></label>
+          <label class="field">Insurance per year<input type="number" min="0" [value]="insurance()" (input)="number('insurance', $event)" /></label>
+          <label class="field">HOA per month<input type="number" min="0" [value]="hoa()" (input)="number('hoa', $event)" /></label>
+        </div>
+        <div>
+          @if (result(); as payment) {
+            <p class="eyebrow">Estimated monthly</p>
+            <p class="pay">{{ money(payment.totalMonthly, true) }}</p>
+            <ul class="breakdown">
+              <li><span>Principal and interest</span><strong>{{ money(payment.monthlyPrincipalAndInterest, true) }}</strong></li>
+              <li><span>Property tax</span><strong>{{ money(payment.monthlyTax, true) }}</strong></li>
+              <li><span>Insurance</span><strong>{{ money(payment.monthlyInsurance, true) }}</strong></li>
+              <li><span>HOA</span><strong>{{ money(payment.monthlyHoa, true) }}</strong></li>
+            </ul>
+            <canvas #chart class="chart" aria-hidden="true"></canvas>
+          }
+          @if (calcError()) {
+            <p class="banner error" role="alert">{{ calcError() }}</p>
+          }
+        </div>
+      </div>
+    </section>
+
+    @if (house.openHouses.length) {
+      <section class="wrap section">
+        <h2>Open house</h2>
+        <ul class="showing-list">
+          @for (visit of house.openHouses; track visit.id) {
+            <li>
+              <strong>{{ when(visit.startsAt) }} to {{ clock(visit.endsAt) }}</strong>
+              @if (visit.notes) { <span>{{ visit.notes }}</span> }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="wrap section" id="showing">
+      <h2>Schedule a showing</h2>
+      @if (groups().length === 0) {
+        <p class="quiet">No open times are posted yet.</p>
+      } @else {
+        @for (group of groups(); track group[0]) {
+          <h3>{{ dayLabel(group[0]) }}</h3>
+          <div class="slots">
+            @for (slot of group[1]; track slot.startsAt) {
+              <button
+                type="button"
+                class="slot"
+                [disabled]="!slot.available"
+                [attr.aria-pressed]="selectedSlot()?.startsAt === slot.startsAt"
+                (click)="selectedSlot.set(slot)"
+              >{{ clock(slot.startsAt) }}{{ slot.available ? '' : ' taken' }}</button>
+            }
+          </div>
+        }
+        <form class="stack form-gap" (submit)="book($event)">
+          <div class="form-grid">
+            <label class="field">Name<input [value]="showName()" (input)="showName.set($any($event.target).value)" required /></label>
+            <label class="field">Email<input type="email" [value]="showEmail()" (input)="showEmail.set($any($event.target).value)" required /></label>
+            <label class="field">Phone<input [value]="showPhone()" (input)="showPhone.set($any($event.target).value)" /></label>
+          </div>
+          <button class="btn" type="submit" [disabled]="sendingShow()">Book this time</button>
+        </form>
+        @if (showNotice()) {
+          <p class="banner" role="status">
+            {{ showNotice() }}
+            @if (booked(); as showing) {
+              <a [href]="showing.icsUrl">Download .ics</a>
+            }
+          </p>
+        }
+        @if (showError()) {
+          <p class="banner error" role="alert">{{ showError() }}</p>
+        }
+      }
+    </section>
+
+    <section class="wrap section" id="ask">
+      <h2>Ask about this house</h2>
+      <p class="quiet">Saved in the studio. Nothing is emailed.</p>
+      <form class="stack form-gap" (submit)="sendLead($event)">
+        <div class="form-grid">
+          <label class="field">Name<input [value]="leadName()" (input)="leadName.set($any($event.target).value)" required /></label>
+          <label class="field">Email<input type="email" [value]="leadEmail()" (input)="leadEmail.set($any($event.target).value)" required /></label>
+          <label class="field">Phone<input [value]="leadPhone()" (input)="leadPhone.set($any($event.target).value)" /></label>
+          <label class="field span-2">Message<textarea [value]="leadMessage()" (input)="leadMessage.set($any($event.target).value)"></textarea></label>
+        </div>
+        <fieldset class="choice">
+          <legend>Pre-approved for a mortgage?</legend>
+          <label><input type="radio" name="preapproved" [checked]="preApproved() === true" (change)="preApproved.set(true)" /> Yes</label>
+          <label><input type="radio" name="preapproved" [checked]="preApproved() === false" (change)="preApproved.set(false)" /> No</label>
+        </fieldset>
+        <button class="btn" type="submit" [disabled]="sendingLead()">Send message</button>
+      </form>
+      @if (leadNotice()) { <p class="banner" role="status">{{ leadNotice() }}</p> }
+      @if (leadError()) { <p class="banner error" role="alert">{{ leadError() }}</p> }
+    </section>
+
+    <section class="wrap section agent">
+      <h2>The agent</h2>
+      <div class="agent-row">
+        @if (house.agentHeadshotUrl) {
+          <img class="headshot" [src]="house.agentHeadshotUrl" [alt]="house.agentName" />
+        }
+        <div>
+          <p class="agent-name">{{ house.agentName }}</p>
+          <p>{{ house.agentBrokerage }}</p>
+          <p><a [href]="'mailto:' + house.agentEmail">{{ house.agentEmail }}</a> · {{ house.agentPhone }}</p>
+          <p class="measure">{{ house.agentBio }}</p>
+          @if (house.agentHeadshotCredit) {
+            <p class="quiet">Headshot by
+              @if (house.agentHeadshotCreditUrl) {
+                <a [href]="house.agentHeadshotCreditUrl" rel="noopener">{{ house.agentHeadshotCredit }}</a>
+              } @else {
+                {{ house.agentHeadshotCredit }}
+              }
+              on Unsplash.
+            </p>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap section">
+      <h2>Photograph credits</h2>
+      <ul class="credits">
+        @for (photo of house.photos; track photo.id) {
+          @if (photo.creditName) {
+            <li>
+              {{ photo.caption || 'Photograph' }} by
+              @if (photo.creditUrl) {
+                <a [href]="photo.creditUrl" rel="noopener">{{ photo.creditName }}</a>
+              } @else {
+                {{ photo.creditName }}
+              }
+              on Unsplash.
+            </li>
+          }
+        }
+      </ul>
+    </section>
+
+    @if (lightbox() !== null) {
+      <div class="lightbox" role="dialog" aria-modal="true" aria-label="Photograph">
+        <div class="lightbox-bar">
+          <button type="button" #closeBtn (click)="closeLightbox()">Close</button>
+          <button type="button" (click)="stepLightbox(-1)">Previous</button>
+          <button type="button" (click)="stepLightbox(1)">Next</button>
+        </div>
+        <img [src]="house.photos[lightbox()!].url" [alt]="house.photos[lightbox()!].caption || house.street" />
+        <p>{{ house.photos[lightbox()!].caption }}
+          @if (house.photos[lightbox()!].creditName) {
+            <span> · {{ house.photos[lightbox()!].creditName }}</span>
+          }
+        </p>
+      </div>
+    }
+  </article>
+}

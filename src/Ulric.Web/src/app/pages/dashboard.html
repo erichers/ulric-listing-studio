@@ -1,0 +1,147 @@
+<section class="wrap section">
+  <p class="eyebrow">Dashboard</p>
+  <h1>The studio desk</h1>
+  <p class="lede">Listings, leads, and the showings still ahead.</p>
+
+  @if (error()) {
+    <p class="banner error" role="alert">{{ error() }}</p>
+  }
+
+  @if (data() === null && !error()) {
+    <div class="skeleton block"></div>
+    <div class="skeleton line"></div>
+  } @else if (data(); as desk) {
+    <dl class="stats">
+      <div><dt>Views</dt><dd>{{ desk.viewCount }}</dd></div>
+      <div><dt>Leads</dt><dd>{{ desk.leadCount }}</dd></div>
+      <div><dt>New</dt><dd>{{ desk.newLeadCount }}</dd></div>
+      <div><dt>Showings</dt><dd>{{ desk.upcomingShowings }}</dd></div>
+    </dl>
+    <div class="spark" aria-hidden="true">
+      @for (day of desk.leadsByDay; track day.date) {
+        <span [style.height.%]="bar(day.count)" [title]="day.date + ': ' + day.count"></span>
+      }
+    </div>
+    <p class="quiet">Leads over the last 14 days. {{ desk.publishedCount }} of {{ desk.listingCount }} listings are published.</p>
+
+    <div class="section-head">
+      <h2>Listings</h2>
+      <a class="btn" routerLink="/builder">New listing</a>
+    </div>
+    @if (desk.listings.length === 0) {
+      <p>No listings yet. <a routerLink="/builder">Start one</a>.</p>
+    } @else {
+      <table class="stack">
+        <thead>
+          <tr><th>House</th><th>Price</th><th>Status</th><th>Views</th><th>Leads</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (row of desk.listings; track row.id) {
+            <tr>
+              <td data-label="House">
+                <a [routerLink]="['/p', row.slug]">{{ row.street }}</a>
+                <span class="quiet">{{ row.city }}{{ row.state ? ', ' + row.state : '' }}</span>
+              </td>
+              <td data-label="Price">{{ money(row.price) }}</td>
+              <td data-label="Status">{{ row.status }}</td>
+              <td data-label="Views">{{ row.viewCount }}</td>
+              <td data-label="Leads">{{ row.leadCount }}</td>
+              <td data-label="Actions" class="actions-cell">
+                <a [routerLink]="['/builder', row.id]">Edit</a>
+                <a [href]="'/api/listings/' + row.id + '/flyer'">Flyer</a>
+                @if (pendingDelete() === row.id) {
+                  <button type="button" (click)="remove(row.id)">Delete</button>
+                  <button type="button" (click)="pendingDelete.set(null)">Keep</button>
+                } @else {
+                  <button type="button" (click)="pendingDelete.set(row.id)">Delete</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <h2>Leads</h2>
+    @if (desk.leads.length === 0) {
+      <p class="quiet">No leads yet.</p>
+    } @else {
+      <table class="stack">
+        <thead>
+          <tr><th>Person</th><th>House</th><th>Message</th><th>Pre-approved</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          @for (lead of desk.leads; track lead.id) {
+            <tr>
+              <td data-label="Person">
+                {{ lead.name }}
+                <span class="quiet">{{ lead.email }} {{ lead.phone }}</span>
+              </td>
+              <td data-label="House">{{ lead.listingStreet }}</td>
+              <td data-label="Message">{{ lead.message }}</td>
+              <td data-label="Pre-approved">{{ lead.preApproved ? 'Yes' : 'No' }}</td>
+              <td data-label="Status">
+                <label class="sr-only" [attr.for]="'lead-' + lead.id">Status for {{ lead.name }}</label>
+                <select [id]="'lead-' + lead.id" [value]="lead.status" (change)="setLeadStatus(lead.id, $event)">
+                  @for (status of statuses; track status) {
+                    <option [value]="status">{{ status }}</option>
+                  }
+                </select>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <div class="calendar-layout">
+      <div>
+        <div class="section-head">
+          <h2>{{ monthLabel() }}</h2>
+          <div class="actions">
+            <button type="button" class="btn btn-ghost" (click)="shiftMonth(-1)">Previous</button>
+            <button type="button" class="btn btn-ghost" (click)="shiftMonth(1)">Next</button>
+          </div>
+        </div>
+        <div class="cal-head" aria-hidden="true">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="cal">
+          @for (cell of cells(); track cell.key) {
+            @if (cell.day === 0) {
+              <span></span>
+            } @else {
+              <button
+                type="button"
+                [class.has]="cell.count > 0"
+                [attr.aria-pressed]="selectedDay() === cell.key"
+                [attr.aria-label]="cell.key + (cell.count ? ', ' + cell.count + ' showings' : '')"
+                (click)="selectedDay.set(selectedDay() === cell.key ? null : cell.key)"
+              >{{ cell.day }}</button>
+            }
+          }
+        </div>
+      </div>
+      <div>
+        <h2>Upcoming showings</h2>
+        @if (visibleShowings().length === 0) {
+          <p class="quiet">Nothing booked in this view.</p>
+        } @else {
+          <ul class="showing-list">
+            @for (showing of visibleShowings(); track showing.id) {
+              <li>
+                <strong>{{ when(showing.startsAt) }}</strong>
+                <span>{{ showing.visitorName }} · {{ showing.listingStreet }}</span>
+                <span class="quiet">{{ showing.visitorEmail }}</span>
+                <div class="actions">
+                  <a [href]="showing.icsUrl">Download .ics</a>
+                  <button type="button" (click)="cancelShowing(showing.id)">Cancel</button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
+</section>

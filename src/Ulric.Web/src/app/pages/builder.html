@@ -1,0 +1,202 @@
+<section class="wrap builder-page">
+  <div class="builder-head">
+    <div>
+      <p class="eyebrow">Builder</p>
+      <h1>{{ draft().street || 'New listing' }}</h1>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn btn-ghost preview-toggle" (click)="showPreview.set(!showPreview())">
+        {{ showPreview() ? 'Show form' : 'Show preview' }}
+      </button>
+      <button type="button" class="btn btn-ghost" [disabled]="saving()" (click)="save('draft')">Save draft</button>
+      <button type="button" class="btn" [disabled]="saving()" (click)="save('published')">Publish</button>
+    </div>
+  </div>
+
+  @if (notice()) {
+    <p class="banner" role="status">
+      {{ notice() }}
+      @if (draft().status === 'published' && draft().slug) {
+        <a [routerLink]="['/p', draft().slug]">Open the page</a>
+      }
+    </p>
+  }
+  @if (error()) {
+    <p class="banner error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <div class="skeleton line"></div>
+    <div class="skeleton block"></div>
+  } @else {
+    <div class="builder" [class.previewing]="showPreview()">
+      <ol class="steps">
+        @for (label of steps; track label; let index = $index) {
+          <li>
+            <button type="button" [attr.aria-current]="step() === index ? 'step' : null" (click)="step.set(index)">
+              <span>{{ index + 1 }}</span>{{ label }}
+            </button>
+          </li>
+        }
+      </ol>
+
+      <form class="form-col" (submit)="$event.preventDefault()">
+        @if (step() === 0) {
+          <div class="form-grid">
+            <label class="field span-2">Street<input [value]="draft().street" (input)="text('street', $event)" autocomplete="street-address" /></label>
+            <label class="field">City<input [value]="draft().city" (input)="text('city', $event)" /></label>
+            <label class="field">State<input [value]="draft().state" (input)="text('state', $event)" /></label>
+            <label class="field">Postal code<input [value]="draft().postalCode" (input)="text('postalCode', $event)" /></label>
+            <label class="field">Country<input [value]="draft().country" (input)="text('country', $event)" /></label>
+          </div>
+        }
+
+        @if (step() === 1) {
+          <div class="form-grid">
+            <label class="field">Price<input type="number" min="0" step="1000" [value]="draft().price || ''" (input)="number('price', $event)" /></label>
+            <label class="field">Beds<input type="number" min="0" step="1" [value]="draft().beds || ''" (input)="number('beds', $event)" /></label>
+            <label class="field">Baths<input type="number" min="0" step="0.5" [value]="draft().baths || ''" (input)="number('baths', $event)" /></label>
+            <label class="field">Square feet<input type="number" min="0" step="1" [value]="draft().squareFeet || ''" (input)="number('squareFeet', $event)" /></label>
+            <label class="field">Lot, acres<input type="number" min="0" step="0.01" [value]="draft().lotAcres || ''" (input)="number('lotAcres', $event)" /></label>
+            <label class="field">Year built<input type="number" min="1700" max="2100" [value]="draft().yearBuilt || ''" (input)="number('yearBuilt', $event)" /></label>
+          </div>
+        }
+
+        @if (step() === 2) {
+          <div class="form-grid">
+            <label class="field span-2">Headline<input [value]="draft().headline" (input)="text('headline', $event)" /></label>
+            <label class="field span-2">Description<textarea [value]="draft().description" (input)="text('description', $event)"></textarea></label>
+            <label class="field span-2">Neighborhood<textarea [value]="draft().neighborhood" (input)="text('neighborhood', $event)"></textarea></label>
+          </div>
+          <div class="stack">
+            <label class="field">Features and amenities
+              <span class="row">
+                <input [value]="featureText()" (input)="featureText.set($any($event.target).value)" (keydown.enter)="$event.preventDefault(); addFeature()" />
+                <button type="button" class="btn btn-ghost" (click)="addFeature()">Add</button>
+              </span>
+            </label>
+            <ul class="chips">
+              @for (feature of draft().features; track feature + $index) {
+                <li class="chip">{{ feature }} <button type="button" (click)="removeFeature($index)" [attr.aria-label]="'Remove ' + feature">Remove</button></li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (step() === 3) {
+          <div class="form-grid">
+            <label class="field span-2">Photo URL<input [value]="photoUrl()" (input)="photoUrl.set($any($event.target).value)" placeholder="https://" /></label>
+            <label class="field">Caption<input [value]="photoCaption()" (input)="photoCaption.set($any($event.target).value)" /></label>
+            <label class="field">Photographer<input [value]="photoCredit()" (input)="photoCredit.set($any($event.target).value)" /></label>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-ghost" (click)="addPhoto()">Add URL</button>
+            <label class="btn btn-ghost file">Upload image
+              <input type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadPhoto($event)" />
+            </label>
+          </div>
+          <ul class="photo-list">
+            @for (photo of draft().photos; track photo.id; let index = $index) {
+              <li>
+                <img [src]="photo.url" [alt]="photo.caption || 'Listing photo'" />
+                <div>
+                  <label class="field">Caption<input [value]="photo.caption" (input)="patchPhoto(index, 'caption', $event)" /></label>
+                  <label class="field">Credit<input [value]="photo.creditName" (input)="patchPhoto(index, 'creditName', $event)" /></label>
+                  <label class="field">Credit link<input [value]="photo.creditUrl" (input)="patchPhoto(index, 'creditUrl', $event)" /></label>
+                  <div class="actions">
+                    <button type="button" class="btn btn-ghost" (click)="movePhoto(index, -1)">Up</button>
+                    <button type="button" class="btn btn-ghost" (click)="movePhoto(index, 1)">Down</button>
+                    <button type="button" class="btn btn-ghost" (click)="removePhoto(index)">Remove</button>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (step() === 4) {
+          <div class="stack">
+            <div class="section-head">
+              <h2>Open houses</h2>
+              <button type="button" class="btn btn-ghost" (click)="addVisit()">Add open house</button>
+            </div>
+            @for (visit of draft().openHouses; track visit.id; let index = $index) {
+              <div class="form-grid visit-row">
+                <label class="field">Starts<input type="datetime-local" [value]="stamp(visit.startsAt)" (input)="patchVisit(index, 'startsAt', $event)" /></label>
+                <label class="field">Ends<input type="datetime-local" [value]="stamp(visit.endsAt)" (input)="patchVisit(index, 'endsAt', $event)" /></label>
+                <label class="field span-2">Notes<input [value]="visit.notes" (input)="patchVisit(index, 'notes', $event)" /></label>
+                <button type="button" class="btn btn-ghost" (click)="removeVisit(index)">Remove</button>
+              </div>
+            }
+            <div class="section-head">
+              <h2>Showing windows</h2>
+              <button type="button" class="btn btn-ghost" (click)="addWindow()">Add window</button>
+            </div>
+            <p class="quiet">Visitors pick a slot inside each window. A booked slot cannot be taken twice.</p>
+            @for (window of draft().showingWindows; track window.id; let index = $index) {
+              <div class="form-grid visit-row">
+                <label class="field">Opens<input type="datetime-local" [value]="stamp(window.startsAt)" (input)="patchWindow(index, 'startsAt', $event)" /></label>
+                <label class="field">Closes<input type="datetime-local" [value]="stamp(window.endsAt)" (input)="patchWindow(index, 'endsAt', $event)" /></label>
+                <label class="field">Minutes per slot<input type="number" min="15" max="240" step="15" [value]="window.slotMinutes" (input)="patchWindow(index, 'slotMinutes', $event)" /></label>
+                <button type="button" class="btn btn-ghost" (click)="removeWindow(index)">Remove</button>
+              </div>
+            }
+          </div>
+        }
+
+        @if (step() === 5) {
+          <div class="form-grid">
+            <label class="field">Name<input [value]="draft().agentName" (input)="text('agentName', $event)" /></label>
+            <label class="field">Brokerage<input [value]="draft().agentBrokerage" (input)="text('agentBrokerage', $event)" /></label>
+            <label class="field">Email<input type="email" [value]="draft().agentEmail" (input)="text('agentEmail', $event)" /></label>
+            <label class="field">Phone<input [value]="draft().agentPhone" (input)="text('agentPhone', $event)" /></label>
+            <label class="field span-2">Bio<textarea [value]="draft().agentBio" (input)="text('agentBio', $event)"></textarea></label>
+            <label class="field span-2">Headshot URL<input [value]="draft().agentHeadshotUrl" (input)="text('agentHeadshotUrl', $event)" /></label>
+          </div>
+          <label class="btn btn-ghost file">Upload headshot
+            <input type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadPhoto($event, true)" />
+          </label>
+          @if (draft().agentHeadshotUrl) {
+            <img class="headshot" [src]="draft().agentHeadshotUrl" alt="Agent headshot preview" />
+          }
+        }
+
+        @if (step() === 6) {
+          <div class="themes" role="radiogroup" aria-label="Page theme">
+            @for (theme of themes; track theme.id) {
+              <button type="button" class="theme-card" role="radio" [attr.aria-checked]="draft().theme === theme.id" (click)="setTheme(theme.id)">
+                <span class="swatch" [class]="'swatch-' + theme.id"></span>
+                <strong>{{ theme.name }}</strong>
+                <em>{{ theme.note }}</em>
+              </button>
+            }
+          </div>
+          <p class="quiet">Publishing checks the address, price, a photo, and the agent name.</p>
+        }
+
+        <div class="actions step-nav">
+          <button type="button" class="btn btn-ghost" [disabled]="step() === 0" (click)="step.set(step() - 1)">Back</button>
+          <button type="button" class="btn btn-ghost" [disabled]="step() === steps.length - 1" (click)="step.set(step() + 1)">Next</button>
+        </div>
+      </form>
+
+      <aside class="preview-col" aria-label="Live preview">
+        <p class="eyebrow">Preview · {{ draft().theme }}</p>
+        <div class="preview-sheet">
+          <app-hero [listing]="draft()" [compact]="true" />
+          <p class="preview-facts">{{ draft().beds || 0 }} bd, {{ draft().baths || 0 }} ba, {{ draft().squareFeet || 0 }} sq ft</p>
+          @if (draft().description) {
+            <p class="preview-copy">{{ draft().description }}</p>
+          }
+          @if (draft().photos.length > 1) {
+            <div class="preview-photos">
+              @for (photo of draft().photos.slice(0, 3); track photo.id) {
+                <img [src]="photo.url" [alt]="photo.caption || draft().street" />
+              }
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+  }
+</section>

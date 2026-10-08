@@ -1,0 +1,25 @@
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <a class="wordmark" routerLink="/">Ulric <em>studio</em></a>
+  <nav class="nav" aria-label="Studio">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Studio</a>
+    <a routerLink="/builder" routerLinkActive="active">Builder</a>
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+  </nav>
+  <button
+    type="button"
+    class="theme-toggle"
+    (click)="theme.toggle()"
+    [attr.aria-pressed]="theme.mode() === 'dark'"
+    [attr.aria-label]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+  >{{ theme.mode() === 'dark' ? 'Light' : 'Dark' }}</button>
+</header>
+<main id="main">
+  <router-outlet />
+</main>
+<footer class="site-footer">
+  <div class="footer-row">
+    <a class="wordmark" routerLink="/">Ulric <em>studio</em></a>
+    <p class="quiet">A single-property listing studio.</p>
+  </div>
+</footer>
