@@ -1,7 +1,7 @@
 <section class="wrap builder-page">
   <div class="builder-head">
     <div>
-      <p class="eyebrow">Builder</p>
+      <p class="eyebrow">Listing studio</p>
       <h1>{{ draft().street || 'New listing' }}</h1>
     </div>
     <div class="actions">
@@ -77,9 +77,12 @@
                 <button type="button" class="btn btn-ghost" (click)="addFeature()">Add</button>
               </span>
             </label>
-            <ul class="chips">
+            <ul class="feature-edit">
               @for (feature of draft().features; track feature + $index) {
-                <li class="chip">{{ feature }} <button type="button" (click)="removeFeature($index)" [attr.aria-label]="'Remove ' + feature">Remove</button></li>
+                <li>
+                  <span>{{ feature }}</span>
+                  <button type="button" (click)="removeFeature($index)" [attr.aria-label]="'Remove ' + feature">Remove</button>
+                </li>
               }
             </ul>
           </div>

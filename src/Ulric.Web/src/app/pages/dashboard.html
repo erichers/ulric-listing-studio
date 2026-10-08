@@ -1,7 +1,10 @@
-<section class="wrap section rise">
-  <p class="eyebrow">Dashboard</p>
-  <h1>The studio desk</h1>
-  <p class="lede">Listings, leads, and the showings still ahead.</p>
+<section class="home">
+  <div class="wrap">
+  <div class="home-intro">
+    <p class="eyebrow">Listing studio</p>
+    <h1>The desk</h1>
+    <p class="lede">Views, the people who wrote, and the showings still ahead.</p>
+  </div>
 
   @if (error()) {
     <p class="banner error" role="alert">{{ error() }}</p>
@@ -17,84 +20,91 @@
       <div><dt>New</dt><dd>{{ desk.newLeadCount }}</dd></div>
       <div><dt>Showings</dt><dd>{{ desk.upcomingShowings }}</dd></div>
     </dl>
-    <div class="spark" aria-hidden="true">
+    <div class="marks" aria-hidden="true">
       @for (day of desk.leadsByDay; track day.date) {
         <span [style.height.%]="bar(day.count)" [title]="day.date + ': ' + day.count"></span>
       }
     </div>
     <p class="quiet">Leads over the last 14 days. {{ desk.publishedCount }} of {{ desk.listingCount }} listings are published.</p>
 
-    <div class="section-head">
-      <h2>Listings</h2>
-      <a class="btn" routerLink="/builder">New listing</a>
-    </div>
-    @if (desk.listings.length === 0) {
-      <p>No listings yet. <a routerLink="/builder">Start one</a>.</p>
-    } @else {
-      <table class="stack">
-        <thead>
-          <tr><th>House</th><th>Price</th><th>Status</th><th>Views</th><th>Leads</th><th></th></tr>
-        </thead>
-        <tbody>
-          @for (row of desk.listings; track row.id) {
-            <tr>
-              <td data-label="House">
-                <a [routerLink]="['/p', row.slug]">{{ row.street }}</a>
-                <span class="quiet">{{ row.city }}{{ row.state ? ', ' + row.state : '' }}</span>
-              </td>
-              <td data-label="Price">{{ money(row.price) }}</td>
-              <td data-label="Status">{{ row.status }}</td>
-              <td data-label="Views">{{ row.viewCount }}</td>
-              <td data-label="Leads">{{ row.leadCount }}</td>
-              <td data-label="Actions" class="actions-cell">
-                <a [routerLink]="['/builder', row.id]">Edit</a>
-                <a [href]="flyerHref(row.id)">Flyer</a>
-                @if (pendingDelete() === row.id) {
-                  <button type="button" (click)="remove(row.id)">Delete</button>
-                  <button type="button" (click)="pendingDelete.set(null)">Keep</button>
+    <div class="desk-block">
+      <div class="section-head">
+        <h2>Houses</h2>
+        <a class="btn" routerLink="/builder">New listing</a>
+      </div>
+      @if (desk.listings.length === 0) {
+        <p class="eyebrow">No listings yet</p>
+        <h2>Start with an address.</h2>
+        <a class="btn" routerLink="/builder">Open the builder</a>
+      } @else {
+        <div class="folio-list">
+          @for (row of desk.listings; track row.id; let index = $index) {
+            <article class="folio-card rise" [style.animation-delay.ms]="index * 40">
+              <a class="folio-photo" [routerLink]="['/p', row.slug]">
+                @if (row.photoUrl) {
+                  <img [src]="row.photoUrl" [alt]="row.headline || row.street" />
                 } @else {
-                  <button type="button" (click)="pendingDelete.set(row.id)">Delete</button>
+                  <div class="hero-fallback"></div>
                 }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-
-    <h2>Leads</h2>
-    @if (desk.leads.length === 0) {
-      <p class="quiet">No leads yet.</p>
-    } @else {
-      <table class="stack">
-        <thead>
-          <tr><th>Person</th><th>House</th><th>Message</th><th>Pre-approved</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          @for (lead of desk.leads; track lead.id) {
-            <tr>
-              <td data-label="Person">
-                {{ lead.name }}
-                <span class="quiet">{{ lead.email }} {{ lead.phone }}</span>
-              </td>
-              <td data-label="House">{{ lead.listingStreet }}</td>
-              <td data-label="Message">{{ lead.message }}</td>
-              <td data-label="Pre-approved">{{ lead.preApproved ? 'Yes' : 'No' }}</td>
-              <td data-label="Status">
-                <label class="sr-only" [attr.for]="'lead-' + lead.id">Status for {{ lead.name }}</label>
-                <select [id]="'lead-' + lead.id" [value]="lead.status" (change)="setLeadStatus(lead.id, $event)">
-                  @for (status of statuses; track status) {
-                    <option [value]="status">{{ status }}</option>
+                <span>Open the page</span>
+              </a>
+              <div class="folio-caption">
+                <p class="eyebrow">{{ row.status === 'published' ? 'Published' : 'Draft' }}</p>
+                <h2><a [routerLink]="['/p', row.slug]">{{ row.street }}</a></h2>
+                <p>{{ row.city }}{{ row.state ? ', ' + row.state : '' }}</p>
+                <p class="hero-price">{{ money(row.price) }}</p>
+                <p class="quiet">{{ fact(row.beds) }} bd · {{ fact(row.baths) }} ba · {{ sqft(row.squareFeet) }} sq ft</p>
+                <p class="quiet">{{ row.viewCount }} views · {{ row.leadCount }} leads</p>
+                <div class="actions">
+                  <a class="btn" [routerLink]="['/builder', row.id]">Edit</a>
+                  <a class="btn btn-ghost" [href]="flyerHref(row.id)">Flyer</a>
+                  @if (pendingDelete() === row.id) {
+                    <button type="button" class="text-danger" (click)="remove(row.id)">Delete</button>
+                    <button type="button" (click)="pendingDelete.set(null)">Keep</button>
+                  } @else {
+                    <button type="button" (click)="pendingDelete.set(row.id)">Delete</button>
                   }
-                </select>
-              </td>
-            </tr>
+                </div>
+              </div>
+            </article>
           }
-        </tbody>
-      </table>
-    }
+        </div>
+      }
+    </div>
 
-    <div class="calendar-layout">
+    <div class="desk-block">
+      <h2>Leads</h2>
+      @if (desk.leads.length === 0) {
+        <p class="quiet">No one has written yet.</p>
+      } @else {
+        <ul class="letters">
+          @for (lead of desk.leads; track lead.id) {
+            <li>
+              <div class="letter-top">
+                <div>
+                  <p class="letter-name">{{ lead.name }}</p>
+                  <p class="quiet">{{ lead.email }}{{ lead.phone ? ' · ' + lead.phone : '' }}</p>
+                </div>
+                <label class="field">
+                  Status
+                  <select class="status-select" [attr.aria-label]="'Status for ' + lead.name" [value]="lead.status" (change)="setLeadStatus(lead.id, $event)">
+                    @for (status of statuses; track status) {
+                      <option [value]="status">{{ status }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+              @if (lead.message) {
+                <p>{{ lead.message }}</p>
+              }
+              <p class="quiet">{{ lead.listingStreet }} · {{ lead.preApproved ? 'Pre-approved' : 'Not pre-approved' }}</p>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="desk-block calendar-layout">
       <div>
         <div class="section-head">
           <h2>{{ monthLabel() }}</h2>
@@ -144,4 +154,5 @@
       </div>
     </div>
   }
+  </div>
 </section>
