@@ -1,6 +1,6 @@
 <section class="home">
   <div class="wrap">
-  <div class="home-intro">
+  <div class="home-intro stagger">
     <p class="eyebrow">Listing studio</p>
     <h1>The desk</h1>
     <p class="lede">Views, the people who wrote, and the showings still ahead.</p>
@@ -15,17 +15,34 @@
     <div class="skeleton line"></div>
   } @else if (data(); as desk) {
     <dl class="stats">
-      <div><dt>Views</dt><dd>{{ desk.viewCount }}</dd></div>
-      <div><dt>Leads</dt><dd>{{ desk.leadCount }}</dd></div>
-      <div><dt>New</dt><dd>{{ desk.newLeadCount }}</dd></div>
-      <div><dt>Showings</dt><dd>{{ desk.upcomingShowings }}</dd></div>
+      <div><dt>Views</dt><dd><app-count [value]="desk.viewCount" /></dd></div>
+      <div><dt>Leads</dt><dd><app-count [value]="desk.leadCount" /></dd></div>
+      <div><dt>New</dt><dd><app-count [value]="desk.newLeadCount" /></dd></div>
+      <div><dt>Showings</dt><dd><app-count [value]="desk.upcomingShowings" /></dd></div>
     </dl>
-    <div class="marks" aria-hidden="true">
-      @for (day of desk.leadsByDay; track day.date) {
-        <span [style.height.%]="bar(day.count)" [title]="day.date + ': ' + day.count"></span>
-      }
-    </div>
-    <p class="quiet">Leads over the last 14 days. {{ desk.publishedCount }} of {{ desk.listingCount }} listings are published.</p>
+    <figure #leadChart class="lead-chart" [class.drawn]="chartDrawn()">
+      <svg viewBox="0 0 336 96" role="img" [attr.aria-label]="leadChartLabel()">
+        <line class="axis" x1="8" y1="68" x2="328" y2="68" />
+        @for (day of desk.leadsByDay; track day.date; let i = $index) {
+          <rect
+            class="lead-bar"
+            [attr.x]="10 + i * 24"
+            width="12"
+            [attr.y]="68 - leadBar(day.count)"
+            [attr.height]="leadBar(day.count)"
+            [style.transition-delay.ms]="i * 24"
+          >
+            <title>{{ shortDay(day.date) }}: {{ day.count }}</title>
+          </rect>
+        }
+        @if (desk.leadsByDay.length >= 14) {
+          <text class="tick" x="10" y="88">{{ shortDay(desk.leadsByDay[0].date) }}</text>
+          <text class="tick" x="168" y="88" text-anchor="middle">{{ shortDay(desk.leadsByDay[7].date) }}</text>
+          <text class="tick" x="326" y="88" text-anchor="end">{{ shortDay(desk.leadsByDay[13].date) }}</text>
+        }
+      </svg>
+      <figcaption class="quiet">Leads over the last 14 days. {{ desk.publishedCount }} of {{ desk.listingCount }} listings are published.</figcaption>
+    </figure>
 
     <div class="desk-block">
       <div class="section-head">

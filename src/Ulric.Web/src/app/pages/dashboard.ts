@@ -1,8 +1,9 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { ApiService, appUrl } from '../core/api.service';
 import { fact, money, sqft, when } from '../core/format';
+import { CountUp } from '../motion/count';
 import { Dashboard, LeadStatus } from '../core/models';
 
 interface CalendarCell {
@@ -13,7 +14,7 @@ interface CalendarCell {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, CountUp],
   templateUrl: './dashboard.html',
 })
 export class DashboardPage implements OnInit {
@@ -68,7 +69,38 @@ export class DashboardPage implements OnInit {
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   });
 
+  readonly chartDrawn = signal(false);
+  private readonly leadChart = viewChild<ElementRef<HTMLElement>>('leadChart');
   readonly barMax = computed(() => Math.max(1, ...(this.data()?.leadsByDay.map((day) => day.count) ?? [1])));
+  readonly leadChartLabel = computed(() => {
+    const days = this.data()?.leadsByDay ?? [];
+    const total = days.reduce((sum, day) => sum + day.count, 0);
+    return `Leads by day for the last 14 days. ${total} in all.`;
+  });
+
+  constructor() {
+    effect((onCleanup) => {
+      const el = this.leadChart()?.nativeElement;
+      if (!el) {
+        return;
+      }
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        this.chartDrawn.set(true);
+        return;
+      }
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            this.chartDrawn.set(true);
+            io.disconnect();
+          }
+        },
+        { threshold: 0.4 },
+      );
+      io.observe(el);
+      onCleanup(() => io.disconnect());
+    });
+  }
 
   ngOnInit(): void {
     this.title.setTitle('Dashboard | Ulric studio');
@@ -83,11 +115,19 @@ export class DashboardPage implements OnInit {
     }
   }
 
-  bar(count: number): number {
+  leadBar(count: number): number {
     if (count <= 0) {
-      return 8;
+      return 0;
     }
-    return Math.max(18, Math.round((count / this.barMax()) * 100));
+    return Math.max(8, Math.round((count / this.barMax()) * 56));
+  }
+
+  shortDay(iso: string): string {
+    const [year, month, day] = iso.split('-').map(Number);
+    if (!year || !month || !day) {
+      return iso;
+    }
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(year, month - 1, day));
   }
 
   shiftMonth(delta: number): void {

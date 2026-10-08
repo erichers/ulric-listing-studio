@@ -5,6 +5,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Chart, DoughnutController, ArcElement, Tooltip } from 'chart.js';
 import { circleMarker, map as leafletMap, tileLayer, type Map as LeafletMap } from 'leaflet';
 import { Hero } from '../hero/hero';
+import { CountUp } from '../motion/count';
+import { PaymentFlow } from '../motion/payment-flow';
+import { SunStudy } from '../motion/sun-study';
 import { ApiService } from '../core/api.service';
 import { ThemeService } from '../core/theme.service';
 import { clock, dayLabel, fact, money, sqft, when } from '../core/format';
@@ -14,7 +17,7 @@ Chart.register(DoughnutController, ArcElement, Tooltip);
 
 @Component({
   selector: 'app-microsite',
-  imports: [Hero, RouterLink],
+  imports: [Hero, RouterLink, CountUp, PaymentFlow, SunStudy],
   templateUrl: './microsite.html',
   host: {
     '(document:keydown)': 'onKey($event)',
@@ -329,7 +332,9 @@ export class MicrositePage {
         datasets: [{ data: parts.map((part) => part.value), backgroundColor: parts.map((part) => part.color), borderWidth: 0 }],
       },
       options: {
-        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 400 },
+        animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? false
+          : { duration: 700, easing: 'easeOutQuart' },
         plugins: {
           legend: { display: false },
           tooltip: {

@@ -49,6 +49,11 @@
     }
 
     <section class="wrap section">
+      <h2>Daylight</h2>
+      <app-sun-study [squareFeet]="house.squareFeet" />
+    </section>
+
+    <section class="wrap section">
       <h2>Map</h2>
       @if (house.latitude != null && house.longitude != null) {
         <div #map class="map-frame" role="region" aria-label="Map of the property"></div>
@@ -76,6 +81,7 @@
     <section class="wrap section" id="payment">
       <h2>Monthly payment</h2>
       <p class="quiet">Estimate only. A lender confirms the payment.</p>
+      <app-payment-flow />
       <div class="mortgage">
         <div class="form-grid">
           <label class="field">Price<input type="number" min="0" [value]="price()" (input)="number('price', $event)" /></label>
@@ -95,7 +101,7 @@
         <div>
           @if (result(); as payment) {
             <p class="eyebrow">Estimated monthly</p>
-            <p class="pay">{{ money(payment.totalMonthly, true) }}</p>
+            <p class="pay"><app-count [value]="payment.totalMonthly" [cents]="true" /></p>
             <ul class="breakdown">
               <li><span>Principal and interest</span><strong>{{ money(payment.monthlyPrincipalAndInterest, true) }}</strong></li>
               <li><span>Property tax</span><strong>{{ money(payment.monthlyTax, true) }}</strong></li>

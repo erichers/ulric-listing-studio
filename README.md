@@ -14,7 +14,7 @@ Ulric studio builds a website for one house. The demo is three fictional homes i
 - Showing windows. A visitor picks a slot. The same slot cannot be booked twice. A booked showing can be downloaded as an `.ics` file.
 - A dashboard with listings, lead status (`new`, `contacted`, `showing`, `offer`), an upcoming showings calendar, and view and lead counts.
 - Light and dark mode. The choice is saved in the browser. With no saved choice, the page follows the system setting.
-- Motion on the hero, gallery, cards, forms, and route changes. `prefers-reduced-motion` turns that motion off.
+- Motion on entrances, numbers, the payment diagram, the daylight study, and route changes. `prefers-reduced-motion` turns that motion off.
 - Phone and desktop layouts, keyboard focus, and skeleton placeholders while data loads.
 
 ## Screenshot tour
@@ -28,6 +28,12 @@ Light desktop, then dark desktop, then the phone widths.
 | Builder | ![Builder light desktop](docs/screenshots/builder-light-desktop.png) | ![Builder dark desktop](docs/screenshots/builder-dark-desktop.png) | ![Builder light phone](docs/screenshots/builder-light-phone.png) | ![Builder dark phone](docs/screenshots/builder-dark-phone.png) |
 | Dashboard | ![Dashboard light desktop](docs/screenshots/dashboard-light-desktop.png) | ![Dashboard dark desktop](docs/screenshots/dashboard-dark-desktop.png) | ![Dashboard light phone](docs/screenshots/dashboard-light-phone.png) | ![Dashboard dark phone](docs/screenshots/dashboard-dark-phone.png) |
 
+## Motion
+
+Pages enter with a short fade and a 12px rise, staggered when a section has several parts. Route changes crossfade. Counts on the desk and the monthly payment run up once they are on screen. The 14-day lead chart is a row of equal columns on a baseline. Days with no leads stay empty, and the columns grow up from that line. The payment section draws a small diagram of price, down payment, loan, then tax, insurance, and HOA.
+
+The listing page also has a daylight study: a simple house massing, not a survey of the lot. three.js loads only on that page, the pixel ratio stays at 2 or below, and the sun pauses when the study is off screen. If motion is reduced, or WebGL is unavailable, a still elevation is shown instead. The theme control fades color over about 400ms.
+
 ## Stack
 
 - ASP.NET Core 8 Web API
@@ -36,6 +42,7 @@ Light desktop, then dark desktop, then the phone widths.
 - Leaflet with OpenStreetMap tiles
 - Nominatim for geocoding, called from the API, cached, and limited to one request at a time
 - Chart.js for the payment breakdown
+- three.js for the daylight massing on a listing page
 - QuestPDF, Community license, for the one-page flyer
 
 ## Architecture
