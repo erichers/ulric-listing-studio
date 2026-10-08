@@ -240,6 +240,8 @@ type TextKey =
   | 'headline'
   | 'description'
   | 'neighborhood'
+  | 'schools'
+  | 'parks'
   | 'agentName'
   | 'agentEmail'
   | 'agentPhone'

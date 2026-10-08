@@ -12,66 +12,74 @@ import {
   Slot,
 } from './models';
 
+export function appUrl(path: string): string {
+  const relative = path.replace(/^\/+/, '');
+  if (typeof document === 'undefined') {
+    return relative;
+  }
+  return new URL(relative, document.baseURI).href;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
 
   listings(): Promise<ListingSummary[]> {
-    return firstValueFrom(this.http.get<ListingSummary[]>('/api/listings'));
+    return firstValueFrom(this.http.get<ListingSummary[]>(appUrl('api/listings')));
   }
 
   listing(id: string): Promise<Listing> {
-    return firstValueFrom(this.http.get<Listing>(`/api/listings/${id}`));
+    return firstValueFrom(this.http.get<Listing>(appUrl(`api/listings/${id}`)));
   }
 
   createListing(body: ListingWrite): Promise<Listing> {
-    return firstValueFrom(this.http.post<Listing>('/api/listings', body));
+    return firstValueFrom(this.http.post<Listing>(appUrl('api/listings'), body));
   }
 
   updateListing(id: string, body: ListingWrite): Promise<Listing> {
-    return firstValueFrom(this.http.put<Listing>(`/api/listings/${id}`, body));
+    return firstValueFrom(this.http.put<Listing>(appUrl(`api/listings/${id}`), body));
   }
 
   deleteListing(id: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`/api/listings/${id}`));
+    return firstValueFrom(this.http.delete<void>(appUrl(`api/listings/${id}`)));
   }
 
   publicListing(slug: string): Promise<Listing> {
-    return firstValueFrom(this.http.get<Listing>(`/api/public/listings/${slug}`));
+    return firstValueFrom(this.http.get<Listing>(appUrl(`api/public/listings/${slug}`)));
   }
 
   recordView(slug: string): Promise<void> {
-    return firstValueFrom(this.http.post<void>(`/api/public/listings/${slug}/views`, {}));
+    return firstValueFrom(this.http.post<void>(appUrl(`api/public/listings/${slug}/views`), {}));
   }
 
   slots(slug: string): Promise<Slot[]> {
-    return firstValueFrom(this.http.get<Slot[]>(`/api/public/listings/${slug}/slots`));
+    return firstValueFrom(this.http.get<Slot[]>(appUrl(`api/public/listings/${slug}/slots`)));
   }
 
   createLead(
     slug: string,
     body: { name: string; email: string; phone: string; message: string; preApproved: boolean },
   ): Promise<Lead> {
-    return firstValueFrom(this.http.post<Lead>(`/api/public/listings/${slug}/leads`, body));
+    return firstValueFrom(this.http.post<Lead>(appUrl(`api/public/listings/${slug}/leads`), body));
   }
 
   bookShowing(
     slug: string,
     body: { name: string; email: string; phone: string; startsAt: string; endsAt: string },
   ): Promise<Showing> {
-    return firstValueFrom(this.http.post<Showing>(`/api/public/listings/${slug}/showings`, body));
+    return firstValueFrom(this.http.post<Showing>(appUrl(`api/public/listings/${slug}/showings`), body));
   }
 
   dashboard(): Promise<Dashboard> {
-    return firstValueFrom(this.http.get<Dashboard>('/api/dashboard'));
+    return firstValueFrom(this.http.get<Dashboard>(appUrl('api/dashboard')));
   }
 
   updateLead(id: string, status: string): Promise<Lead> {
-    return firstValueFrom(this.http.patch<Lead>(`/api/leads/${id}`, { status }));
+    return firstValueFrom(this.http.patch<Lead>(appUrl(`api/leads/${id}`), { status }));
   }
 
   updateShowing(id: string, status: string): Promise<Showing> {
-    return firstValueFrom(this.http.patch<Showing>(`/api/showings/${id}`, { status }));
+    return firstValueFrom(this.http.patch<Showing>(appUrl(`api/showings/${id}`), { status }));
   }
 
   mortgage(body: {
@@ -83,13 +91,13 @@ export class ApiService {
     annualInsurance: number;
     monthlyHoa: number;
   }): Promise<MortgageResult> {
-    return firstValueFrom(this.http.post<MortgageResult>('/api/mortgage', body));
+    return firstValueFrom(this.http.post<MortgageResult>(appUrl('api/mortgage'), body));
   }
 
   upload(file: File): Promise<{ url: string }> {
     const data = new FormData();
     data.append('file', file);
-    return firstValueFrom(this.http.post<{ url: string }>('/api/uploads', data));
+    return firstValueFrom(this.http.post<{ url: string }>(appUrl('api/uploads'), data));
   }
 
   errorMessage(error: unknown): string {

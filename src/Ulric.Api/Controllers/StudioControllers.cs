@@ -9,7 +9,7 @@ namespace Ulric.Api.Controllers;
 
 [ApiController]
 [Route("api/listings")]
-public sealed class ListingsController(UlricDbContext db, ListingService listings, ListingFlyer flyers) : ControllerBase
+public sealed class ListingsController(UlricDbContext db, ListingService listings, ListingFlyer flyers, IConfiguration config) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ListingSummary>>> List(CancellationToken ct)
@@ -19,14 +19,14 @@ public sealed class ListingsController(UlricDbContext db, ListingService listing
             .Include(item => item.Leads)
             .OrderByDescending(item => item.UpdatedAt)
             .ToListAsync(ct);
-        return rows.Select(ListingMapper.ToSummary).ToList();
+        return rows.Select(row => ListingMapper.ToSummary(row, config["PublicBaseUrl"])).ToList();
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ListingDetail>> Get(Guid id, CancellationToken ct)
     {
         var listing = await LoadAsync(id, ct);
-        return listing is null ? NotFound(new ApiError("Not found", 404, "That listing is not in the studio.")) : ListingMapper.ToDetail(listing);
+        return listing is null ? NotFound(new ApiError("Not found", 404, "That listing is not in the studio.")) : ListingMapper.ToDetail(listing, config["PublicBaseUrl"]);
     }
 
     [HttpPost]
@@ -38,7 +38,7 @@ public sealed class ListingsController(UlricDbContext db, ListingService listing
             return BadRequest(new ApiError("Could not save", 400, error ?? "Could not save the listing."));
         }
 
-        return Created($"/api/listings/{listing.Id}", ListingMapper.ToDetail(listing));
+        return Created(PublicUrls.Location(Request, config["PublicBaseUrl"], $"api/listings/{listing.Id}"), ListingMapper.ToDetail(listing, config["PublicBaseUrl"]));
     }
 
     [HttpPut("{id:guid}")]
@@ -56,7 +56,7 @@ public sealed class ListingsController(UlricDbContext db, ListingService listing
             return BadRequest(new ApiError("Could not save", 400, error ?? "Could not save the listing."));
         }
 
-        return ListingMapper.ToDetail(listing);
+        return ListingMapper.ToDetail(listing, config["PublicBaseUrl"]);
     }
 
     [HttpDelete("{id:guid}")]
@@ -97,7 +97,7 @@ public sealed class ListingsController(UlricDbContext db, ListingService listing
 
 [ApiController]
 [Route("api/public/listings/{slug}")]
-public sealed class PublicListingsController(UlricDbContext db, BookingService bookings, ILeadNotifier notifier) : ControllerBase
+public sealed class PublicListingsController(UlricDbContext db, BookingService bookings, ILeadNotifier notifier, IConfiguration config) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<ListingDetail>> Get(string slug, CancellationToken ct)
@@ -105,7 +105,7 @@ public sealed class PublicListingsController(UlricDbContext db, BookingService b
         var listing = await LoadPublishedAsync(slug, ct);
         return listing is null
             ? NotFound(new ApiError("Not found", 404, "That listing is not published."))
-            : ListingMapper.ToDetail(listing);
+            : ListingMapper.ToDetail(listing, config["PublicBaseUrl"]);
     }
 
     [HttpPost("views")]
@@ -190,7 +190,7 @@ public sealed class PublicListingsController(UlricDbContext db, BookingService b
         db.Leads.Add(lead);
         await db.SaveChangesAsync(ct);
         await notifier.NotifyAsync(lead, listing, ct);
-        return Created($"/api/leads/{lead.Id}", ListingMapper.ToLead(lead));
+        return Created(PublicUrls.Location(Request, config["PublicBaseUrl"], $"api/leads/{lead.Id}"), ListingMapper.ToLead(lead));
     }
 
     [HttpPost("showings")]
@@ -210,7 +210,7 @@ public sealed class PublicListingsController(UlricDbContext db, BookingService b
         }
 
         result.Showing.Listing = listing;
-        return Created($"/api/showings/{result.Showing.Id}", ListingMapper.ToShowing(result.Showing));
+        return Created(PublicUrls.Location(Request, config["PublicBaseUrl"], $"api/showings/{result.Showing.Id}"), ListingMapper.ToShowing(result.Showing, config["PublicBaseUrl"]));
     }
 
     private Task<Listing?> LoadPublishedAsync(string slug, CancellationToken ct) =>
@@ -254,13 +254,13 @@ public sealed class LeadsController(UlricDbContext db) : ControllerBase
 
 [ApiController]
 [Route("api/showings")]
-public sealed class ShowingsController(UlricDbContext db) : ControllerBase
+public sealed class ShowingsController(UlricDbContext db, IConfiguration config) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<ShowingDto>>> List(CancellationToken ct)
     {
         var rows = await db.Showings.Include(item => item.Listing).OrderBy(item => item.StartsAt).ToListAsync(ct);
-        return rows.Select(ListingMapper.ToShowing).ToList();
+        return rows.Select(row => ListingMapper.ToShowing(row, config["PublicBaseUrl"])).ToList();
     }
 
     [HttpPatch("{id:guid}")]
@@ -280,7 +280,7 @@ public sealed class ShowingsController(UlricDbContext db) : ControllerBase
 
         showing.Status = status == "cancelled" ? ShowingStatus.Cancelled : ShowingStatus.Booked;
         await db.SaveChangesAsync(ct);
-        return ListingMapper.ToShowing(showing);
+        return ListingMapper.ToShowing(showing, config["PublicBaseUrl"]);
     }
 
     [HttpGet("{id:guid}/calendar.ics")]
@@ -299,7 +299,7 @@ public sealed class ShowingsController(UlricDbContext db) : ControllerBase
 
 [ApiController]
 [Route("api/dashboard")]
-public sealed class DashboardController(UlricDbContext db) : ControllerBase
+public sealed class DashboardController(UlricDbContext db, IConfiguration config) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<DashboardDto>> Get(CancellationToken ct)
@@ -322,9 +322,9 @@ public sealed class DashboardController(UlricDbContext db) : ControllerBase
             leads.Count(item => item.Status == LeadStatus.New),
             upcoming,
             days,
-            listings.Select(ListingMapper.ToSummary).ToList(),
+            listings.Select(row => ListingMapper.ToSummary(row, config["PublicBaseUrl"])).ToList(),
             leads.Select(ListingMapper.ToLead).ToList(),
-            showings.Select(ListingMapper.ToShowing).ToList());
+            showings.Select(row => ListingMapper.ToShowing(row, config["PublicBaseUrl"])).ToList());
     }
 }
 
@@ -384,7 +384,7 @@ public sealed class UploadsController(IWebHostEnvironment env, IConfiguration co
         Directory.CreateDirectory(root);
         var name = $"{Guid.NewGuid():N}{extension}";
         await System.IO.File.WriteAllBytesAsync(Path.Combine(root, name), bytes, ct);
-        return new UploadResult($"/uploads/{name}");
+        return new UploadResult(PublicUrls.Apply($"uploads/{name}", config["PublicBaseUrl"]));
     }
 
     public static string ResolveRoot(IWebHostEnvironment env, IConfiguration config)

@@ -20,6 +20,8 @@ public sealed class Listing
     public string Headline { get; set; } = "";
     public string Description { get; set; } = "";
     public string Neighborhood { get; set; } = "";
+    public string Schools { get; set; } = "";
+    public string Parks { get; set; } = "";
     public string FeaturesJson { get; set; } = "[]";
     public string AgentName { get; set; } = "";
     public string AgentEmail { get; set; } = "";

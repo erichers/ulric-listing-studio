@@ -67,6 +67,8 @@
             <label class="field span-2">Headline<input [value]="draft().headline" (input)="text('headline', $event)" /></label>
             <label class="field span-2">Description<textarea [value]="draft().description" (input)="text('description', $event)"></textarea></label>
             <label class="field span-2">Neighborhood<textarea [value]="draft().neighborhood" (input)="text('neighborhood', $event)"></textarea></label>
+            <label class="field span-2">Schools<textarea [value]="draft().schools" (input)="text('schools', $event)"></textarea></label>
+            <label class="field span-2">Nearby parks<textarea [value]="draft().parks" (input)="text('parks', $event)"></textarea></label>
           </div>
           <div class="stack">
             <label class="field">Features and amenities

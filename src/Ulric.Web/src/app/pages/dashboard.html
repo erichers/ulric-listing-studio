@@ -1,4 +1,4 @@
-<section class="wrap section">
+<section class="wrap section rise">
   <p class="eyebrow">Dashboard</p>
   <h1>The studio desk</h1>
   <p class="lede">Listings, leads, and the showings still ahead.</p>
@@ -48,7 +48,7 @@
               <td data-label="Leads">{{ row.leadCount }}</td>
               <td data-label="Actions" class="actions-cell">
                 <a [routerLink]="['/builder', row.id]">Edit</a>
-                <a [href]="'/api/listings/' + row.id + '/flyer'">Flyer</a>
+                <a [href]="flyerHref(row.id)">Flyer</a>
                 @if (pendingDelete() === row.id) {
                   <button type="button" (click)="remove(row.id)">Delete</button>
                   <button type="button" (click)="pendingDelete.set(null)">Keep</button>

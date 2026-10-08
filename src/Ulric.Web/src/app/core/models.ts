@@ -44,6 +44,8 @@ export interface Listing {
   headline: string;
   description: string;
   neighborhood: string;
+  schools: string;
+  parks: string;
   features: string[];
   agentName: string;
   agentEmail: string;
@@ -80,6 +82,8 @@ export interface ListingWrite {
   headline: string;
   description: string;
   neighborhood: string;
+  schools: string;
+  parks: string;
   features: string[];
   agentName: string;
   agentEmail: string;
@@ -191,6 +195,8 @@ export function emptyListing(): Listing {
     headline: '',
     description: '',
     neighborhood: '',
+    schools: '',
+    parks: '',
     features: [],
     agentName: '',
     agentEmail: '',
@@ -229,6 +235,8 @@ export function toWrite(listing: Listing, status: ListingStatus): ListingWrite {
     headline: listing.headline,
     description: listing.description,
     neighborhood: listing.neighborhood,
+    schools: listing.schools,
+    parks: listing.parks,
     features: listing.features,
     agentName: listing.agentName,
     agentEmail: listing.agentEmail,

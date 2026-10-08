@@ -8,7 +8,7 @@ namespace Ulric.Api.Spa;
 
 public static partial class OgInjector
 {
-    public static async Task<string> InjectAsync(string html, string slug, UlricDbContext db, HttpRequest request, CancellationToken ct)
+    public static async Task<string> InjectAsync(string html, string slug, UlricDbContext db, HttpRequest request, string? publicBaseUrl, CancellationToken ct)
     {
         var listing = await db.Listings
             .Include(item => item.Photos)
@@ -19,11 +19,14 @@ public static partial class OgInjector
             return html;
         }
 
-        var baseUrl = $"{request.Scheme}://{request.Host}";
+        var baseUrl = string.IsNullOrWhiteSpace(publicBaseUrl)
+            ? $"{request.Scheme}://{request.Host}{request.PathBase}".TrimEnd('/')
+            : publicBaseUrl.TrimEnd('/');
         var image = listing.Photos.OrderBy(photo => photo.SortOrder).Select(photo => photo.Url).FirstOrDefault() ?? "";
-        if (image.StartsWith('/'))
+        if (!image.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
-            image = baseUrl + image;
+            image = baseUrl + "/" + image.TrimStart('/');
         }
 
         var title = string.IsNullOrWhiteSpace(listing.City) ? listing.Street : $"{listing.Street}, {listing.City}";

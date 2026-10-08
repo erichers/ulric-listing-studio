@@ -59,6 +59,8 @@ public sealed class ListingService(UlricDbContext db, NominatimGeocoder geocoder
         listing.Headline = input.Headline.Trim();
         listing.Description = input.Description.Trim();
         listing.Neighborhood = input.Neighborhood.Trim();
+        listing.Schools = input.Schools?.Trim() ?? "";
+        listing.Parks = input.Parks?.Trim() ?? "";
         listing.FeaturesJson = ListingMapper.Pack(input.Features);
         listing.AgentName = input.AgentName.Trim();
         listing.AgentEmail = input.AgentEmail.Trim();
@@ -129,6 +131,8 @@ public sealed class ListingService(UlricDbContext db, NominatimGeocoder geocoder
         if (input.Headline.Trim().Length > 180) problems.Add("Headline is too long.");
         if (input.Description.Length > 8000) problems.Add("Description is too long.");
         if (input.Neighborhood.Length > 4000) problems.Add("Neighborhood text is too long.");
+        if ((input.Schools?.Length ?? 0) > 2000) problems.Add("Schools text is too long.");
+        if ((input.Parks?.Length ?? 0) > 2000) problems.Add("Parks text is too long.");
         if (input.Price < 0) problems.Add("Price cannot be negative.");
         if (input.Beds < 0 || input.Baths < 0 || input.SquareFeet < 0 || input.LotAcres < 0)
         {

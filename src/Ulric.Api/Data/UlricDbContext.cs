@@ -21,6 +21,12 @@ public sealed class UlricDbContext(DbContextOptions<UlricDbContext> options) : D
             entity.Property(listing => listing.Street).HasMaxLength(200);
             entity.Property(listing => listing.Slug).HasMaxLength(120);
             entity.Property(listing => listing.Theme).HasMaxLength(40);
+            entity.Property(listing => listing.Price).HasPrecision(12, 2);
+            entity.Property(listing => listing.Beds).HasPrecision(4, 1);
+            entity.Property(listing => listing.Baths).HasPrecision(4, 1);
+            entity.Property(listing => listing.LotAcres).HasPrecision(6, 2);
+            entity.Property(listing => listing.Schools).HasMaxLength(2000);
+            entity.Property(listing => listing.Parks).HasMaxLength(2000);
             entity.HasMany(listing => listing.Photos)
                 .WithOne(photo => photo.Listing!)
                 .HasForeignKey(photo => photo.ListingId)
@@ -46,7 +52,7 @@ public sealed class UlricDbContext(DbContextOptions<UlricDbContext> options) : D
         model.Entity<GeocodeCacheEntry>(entity =>
         {
             entity.HasKey(entry => entry.Query);
-            entity.Property(entry => entry.Query).HasMaxLength(400);
+            entity.Property(entry => entry.Query).HasMaxLength(191);
         });
     }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Ulric.Api.Models;
+using Ulric.Api.Services;
 
 namespace Ulric.Api.Contracts;
 
@@ -21,6 +22,8 @@ public sealed class ListingWrite
     public string Headline { get; set; } = "";
     public string Description { get; set; } = "";
     public string Neighborhood { get; set; } = "";
+    public string Schools { get; set; } = "";
+    public string Parks { get; set; } = "";
     public List<string> Features { get; set; } = [];
     public string AgentName { get; set; } = "";
     public string AgentEmail { get; set; } = "";
@@ -101,6 +104,8 @@ public sealed record ListingDetail(
     string Headline,
     string Description,
     string Neighborhood,
+    string Schools,
+    string Parks,
     IReadOnlyList<string> Features,
     string AgentName,
     string AgentEmail,
@@ -185,7 +190,7 @@ public static class ListingMapper
 {
     public static readonly string[] Themes = ["alder", "hearth", "linen"];
 
-    public static ListingDetail ToDetail(Listing listing) => new(
+    public static ListingDetail ToDetail(Listing listing, string? publicBaseUrl = null) => new(
         listing.Id,
         listing.Slug,
         StatusName(listing.Status),
@@ -204,25 +209,27 @@ public static class ListingMapper
         listing.Headline,
         listing.Description,
         listing.Neighborhood,
+        listing.Schools,
+        listing.Parks,
         Unpack(listing.FeaturesJson),
         listing.AgentName,
         listing.AgentEmail,
         listing.AgentPhone,
         listing.AgentBrokerage,
         listing.AgentBio,
-        listing.AgentHeadshotUrl,
+        PublicUrls.Apply(listing.AgentHeadshotUrl, publicBaseUrl),
         listing.AgentHeadshotCredit,
         listing.AgentHeadshotCreditUrl,
         listing.Latitude,
         listing.Longitude,
         listing.ViewCount,
-        listing.Photos.OrderBy(photo => photo.SortOrder).Select(ToPhoto).ToList(),
+        listing.Photos.OrderBy(photo => photo.SortOrder).Select(photo => ToPhoto(photo, publicBaseUrl)).ToList(),
         listing.OpenHouses.OrderBy(item => item.StartsAt).Select(ToVisit).ToList(),
         listing.ShowingWindows.OrderBy(item => item.StartsAt).Select(ToWindow).ToList(),
         listing.CreatedAt,
         listing.UpdatedAt);
 
-    public static ListingSummary ToSummary(Listing listing) => new(
+    public static ListingSummary ToSummary(Listing listing, string? publicBaseUrl = null) => new(
         listing.Id,
         listing.Slug,
         StatusName(listing.Status),
@@ -232,7 +239,7 @@ public static class ListingMapper
         listing.State,
         listing.Price,
         listing.Headline,
-        listing.Photos.OrderBy(photo => photo.SortOrder).Select(photo => photo.Url).FirstOrDefault(),
+        PhotoUrl(listing, publicBaseUrl),
         listing.ViewCount,
         listing.Leads.Count,
         listing.Beds,
@@ -251,7 +258,7 @@ public static class ListingMapper
         LeadName(lead.Status),
         lead.CreatedAt);
 
-    public static ShowingDto ToShowing(Showing showing) => new(
+    public static ShowingDto ToShowing(Showing showing, string? publicBaseUrl = null) => new(
         showing.Id,
         showing.ListingId,
         showing.Listing?.Street ?? "",
@@ -261,10 +268,16 @@ public static class ListingMapper
         showing.VisitorEmail,
         showing.VisitorPhone,
         showing.Status == ShowingStatus.Cancelled ? "cancelled" : "booked",
-        $"/api/showings/{showing.Id}/calendar.ics");
+        PublicUrls.Apply($"api/showings/{showing.Id}/calendar.ics", publicBaseUrl));
 
-    public static PhotoDto ToPhoto(ListingPhoto photo) =>
-        new(photo.Id, photo.Url, photo.Caption, photo.CreditName, photo.CreditUrl, photo.SortOrder);
+    public static PhotoDto ToPhoto(ListingPhoto photo, string? publicBaseUrl = null) =>
+        new(photo.Id, PublicUrls.Apply(photo.Url, publicBaseUrl), photo.Caption, photo.CreditName, photo.CreditUrl, photo.SortOrder);
+
+    private static string? PhotoUrl(Listing listing, string? publicBaseUrl)
+    {
+        var url = listing.Photos.OrderBy(photo => photo.SortOrder).Select(photo => photo.Url).FirstOrDefault();
+        return url is null ? null : PublicUrls.Apply(url, publicBaseUrl);
+    }
 
     public static VisitDto ToVisit(OpenHouse visit) =>
         new(visit.Id, visit.StartsAt, visit.EndsAt, visit.Notes);

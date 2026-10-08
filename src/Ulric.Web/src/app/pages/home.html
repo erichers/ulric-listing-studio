@@ -1,6 +1,6 @@
 <section class="home">
-  <div class="wrap home-grid">
-    <div>
+  <div class="wrap">
+    <div class="home-intro">
       <p class="eyebrow">Listing studio</p>
       <h1>One house.<br />One site.</h1>
       <p class="lede">
@@ -11,6 +11,7 @@
         <a class="btn btn-ghost" routerLink="/dashboard">Open dashboard</a>
       </div>
     </div>
+    <div class="folio-list">
 
     @if (listings() === null && !error()) {
       <div class="folio-card skeleton-card" aria-hidden="true">
@@ -26,8 +27,8 @@
           <a class="btn" routerLink="/builder">Open the builder</a>
         </div>
       } @else {
-        @for (row of rows; track row.id) {
-          <article class="folio-card">
+        @for (row of rows; track row.id; let index = $index) {
+          <article class="folio-card rise" [style.animation-delay.ms]="index * 90">
             <a class="folio-photo" [routerLink]="['/p', row.slug]">
               @if (row.photoUrl) {
                 <img [src]="row.photoUrl" [alt]="row.headline || row.street" />
@@ -51,6 +52,7 @@
         }
       }
     }
+    </div>
   </div>
   @if (error()) {
     <p class="wrap banner error" role="alert">{{ error() }}</p>

@@ -10,7 +10,7 @@
       }
     </div>
     @if (cover(); as photo) {
-      <img class="hero-media" [src]="photo.url" [alt]="photo.caption || listing().street" />
+      <img class="hero-media" [class.is-shown]="shown()" [style.--shift.px]="shift()" (load)="shown.set(true)" [src]="photo.url" [alt]="photo.caption || listing().street" />
     } @else {
       <div class="hero-fallback" aria-hidden="true"></div>
     }
@@ -25,7 +25,7 @@
       <p class="headline">{{ listing().headline }}</p>
     }
     @if (cover(); as photo) {
-      <img class="hero-media" [src]="photo.url" [alt]="photo.caption || listing().street" />
+      <img class="hero-media" [class.is-shown]="shown()" [style.--shift.px]="shift()" (load)="shown.set(true)" [src]="photo.url" [alt]="photo.caption || listing().street" />
     } @else {
       <div class="hero-fallback" aria-hidden="true"></div>
     }
@@ -33,7 +33,7 @@
 } @else {
   <section class="hero hero-alder" [class.compact]="compact()">
     @if (cover(); as photo) {
-      <img class="hero-media" [src]="photo.url" [alt]="photo.caption || listing().street" />
+      <img class="hero-media" [class.is-shown]="shown()" [style.--shift.px]="shift()" (load)="shown.set(true)" [src]="photo.url" [alt]="photo.caption || listing().street" />
     }
     <div class="scrim"></div>
     <div class="hero-copy">

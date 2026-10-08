@@ -111,7 +111,8 @@ public sealed class NominatimGeocoder(
     {
         var collapsed = string.Join(' ', query.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         var key = collapsed.ToLowerInvariant();
-        return key.Length <= 400 ? key : key[..400];
+        // 191 utf8mb4 characters stay under the 767-byte InnoDB index limit on MySQL 5.7.
+        return key.Length <= 191 ? key : key[..191];
     }
 
     private sealed class NominatimHit

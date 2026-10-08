@@ -29,7 +29,7 @@
         <h2 class="wrap-title">Photographs</h2>
         <div class="gallery">
           @for (photo of house.photos; track photo.id; let index = $index) {
-            <button type="button" class="shot" (click)="openLightbox(index, $event)">
+            <button type="button" class="shot rise" [style.animation-delay.ms]="index * 70" (click)="openLightbox(index, $event)">
               <img [src]="photo.url" [alt]="photo.caption || house.street" [attr.loading]="index === 0 ? 'eager' : 'lazy'" />
             </button>
           }
@@ -52,16 +52,24 @@
       <h2>Map</h2>
       @if (house.latitude != null && house.longitude != null) {
         <div #map class="map-frame" role="region" aria-label="Map of the property"></div>
-        <p class="quiet">Map tiles © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors. The address is geocoded with Nominatim and the result is cached.</p>
+        <p class="quiet">Map tiles © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors. Seeded pins sit in the neighborhood, not on a surveyed lot. A new address is located with Nominatim and the result is cached.</p>
       } @else {
         <p>The map appears after the address can be located.</p>
       }
     </section>
 
     @if (house.neighborhood) {
-      <section class="wrap section">
+      <section class="wrap section rise">
         <h2>The neighborhood</h2>
         <p class="measure">{{ house.neighborhood }}</p>
+        @if (house.schools) {
+          <h3>Schools</h3>
+          <p class="measure">{{ house.schools }}</p>
+        }
+        @if (house.parks) {
+          <h3>Nearby parks</h3>
+          <p class="measure">{{ house.parks }}</p>
+        }
       </section>
     }
 
@@ -145,7 +153,7 @@
           <button class="btn" type="submit" [disabled]="sendingShow()">Book this time</button>
         </form>
         @if (showNotice()) {
-          <p class="banner" role="status">
+          <p class="banner ok" role="status">
             {{ showNotice() }}
             @if (booked(); as showing) {
               <a [href]="showing.icsUrl">Download .ics</a>
@@ -175,7 +183,7 @@
         </fieldset>
         <button class="btn" type="submit" [disabled]="sendingLead()">Send message</button>
       </form>
-      @if (leadNotice()) { <p class="banner" role="status">{{ leadNotice() }}</p> }
+      @if (leadNotice()) { <p class="banner ok" role="status">{{ leadNotice() }}</p> }
       @if (leadError()) { <p class="banner error" role="alert">{{ leadError() }}</p> }
     </section>
 
@@ -221,10 +229,11 @@
           }
         }
       </ul>
+      <p class="quiet">These photographs are free-license stand-ins. They are not pictures of the fictional address.</p>
     </section>
 
     @if (lightbox() !== null) {
-      <div class="lightbox" role="dialog" aria-modal="true" aria-label="Photograph">
+      <div class="lightbox" [class.open]="lightboxFrame()" role="dialog" aria-modal="true" aria-label="Photograph">
         <div class="lightbox-bar">
           <button type="button" #closeBtn (click)="closeLightbox()">Close</button>
           <button type="button" (click)="stepLightbox(-1)">Previous</button>

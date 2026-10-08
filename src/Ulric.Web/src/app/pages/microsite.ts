@@ -33,6 +33,7 @@ export class MicrositePage {
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly lightbox = signal<number | null>(null);
+  readonly lightboxFrame = signal(false);
   readonly selectedSlot = signal<Slot | null>(null);
   readonly result = signal<MortgageResult | null>(null);
   readonly calcError = signal<string | null>(null);
@@ -133,7 +134,7 @@ export class MicrositePage {
       this.meta.updateTag({ property: 'og:type', content: 'website' });
       this.meta.updateTag({ property: 'og:url', content: window.location.href });
       if (listing.photos[0]) {
-        this.meta.updateTag({ property: 'og:image', content: listing.photos[0].url });
+        this.meta.updateTag({ property: 'og:image', content: absoluteUrl(listing.photos[0].url) });
       }
       this.price.set(listing.price);
       this.down.set(Math.round(listing.price * 0.2));
@@ -157,12 +158,29 @@ export class MicrositePage {
   openLightbox(index: number, event: Event): void {
     this.opener = event.currentTarget as HTMLElement;
     this.lightbox.set(index);
+    if (this.reducedMotion()) {
+      this.lightboxFrame.set(true);
+    } else {
+      requestAnimationFrame(() => this.lightboxFrame.set(true));
+    }
     queueMicrotask(() => this.closeButton()?.nativeElement.focus());
   }
 
   closeLightbox(): void {
-    this.lightbox.set(null);
-    this.opener?.focus();
+    this.lightboxFrame.set(false);
+    const finish = () => {
+      this.lightbox.set(null);
+      this.opener?.focus();
+    };
+    if (this.reducedMotion()) {
+      finish();
+      return;
+    }
+    window.setTimeout(finish, 220);
+  }
+
+  private reducedMotion(): boolean {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   stepLightbox(delta: number): void {
@@ -354,4 +372,11 @@ export class MicrositePage {
     }
     this.leaflet.setView([latitude, longitude], 14);
   }
+}
+
+function absoluteUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+  return new URL(path.replace(/^\/+/, ''), document.baseURI).href;
 }

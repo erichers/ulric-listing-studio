@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
-import { ApiService } from '../core/api.service';
+import { ApiService, appUrl } from '../core/api.service';
 import { fact, money, sqft, when } from '../core/format';
 import { Dashboard, LeadStatus } from '../core/models';
 
@@ -30,6 +30,7 @@ export class DashboardPage implements OnInit {
   readonly sqft = sqft;
   readonly when = when;
   readonly statuses: LeadStatus[] = ['new', 'contacted', 'showing', 'offer'];
+  readonly flyerHref = (id: string) => appUrl(`api/listings/${id}/flyer`);
 
   readonly monthLabel = computed(() =>
     new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(this.cursor()),
