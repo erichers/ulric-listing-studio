@@ -1,0 +1,34 @@
+<figure class="pay-flow" [class.drawn]="drawn()">
+  <svg viewBox="0 0 640 168" role="img" aria-label="How the monthly estimate is built. Price minus down payment is the loan. Tax, insurance, and HOA are added each month.">
+    <path class="flow-line" d="M118 46 H188" />
+    <path class="flow-line" d="M318 46 H388" />
+    <path class="flow-line" d="M470 72 V98" />
+    <path class="flow-line" d="M470 98 H150" />
+    <path class="flow-line" d="M150 98 V118" />
+    <path class="flow-line" d="M470 98 H250" />
+    <path class="flow-line" d="M250 98 V118" />
+    <path class="flow-line" d="M470 98 H360" />
+    <path class="flow-line" d="M360 98 V118" />
+    <path class="flow-line" d="M470 98 H470" />
+    <path class="flow-line" d="M470 98 V118" />
+    <g class="flow-node">
+      <text x="20" y="42">Price</text>
+      <text x="20" y="62" class="flow-note">the asking amount</text>
+    </g>
+    <g class="flow-node">
+      <text x="198" y="42">Down payment</text>
+      <text x="198" y="62" class="flow-note">taken off the price</text>
+    </g>
+    <g class="flow-node">
+      <text x="398" y="42">Loan</text>
+      <text x="398" y="62" class="flow-note">what is financed</text>
+    </g>
+    <g class="flow-node">
+      <text x="128" y="140">Principal</text>
+      <text x="228" y="140">Tax</text>
+      <text x="328" y="140">Insurance</text>
+      <text x="438" y="140">HOA</text>
+    </g>
+  </svg>
+  <figcaption class="quiet">The monthly figure adds the loan payment, tax, insurance, and HOA. A lender confirms it.</figcaption>
+</figure>

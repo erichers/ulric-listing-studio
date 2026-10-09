@@ -1,0 +1,288 @@
+@if (loading()) {
+  <div class="wide lx-loading">
+    <div class="skeleton hero-skel"></div>
+    <div class="skeleton line"></div>
+    <div class="skeleton line short"></div>
+  </div>
+} @else if (error()) {
+  <section class="wrap section">
+    <p class="eyebrow">Listing</p>
+    <h1>That page is not published.</h1>
+    <p role="alert">{{ error() }}</p>
+    <p><a routerLink="/">Back to Ulric studio</a></p>
+  </section>
+} @else if (listing(); as house) {
+  <article class="lx">
+    @if (house.photos.length) {
+      <section class="lx-gallery wide" [attr.data-count]="house.photos.length" aria-label="Photographs">
+        <div class="lx-grid">
+          @for (photo of house.photos.slice(0, 5); track photo.id; let index = $index) {
+            <button type="button" class="lx-shot" [class.lx-cover]="index === 0" (click)="openLightbox(index, $event)" [attr.aria-label]="'Open photo ' + (index + 1) + ': ' + photo.caption">
+              <img [src]="photo.url" [alt]="photo.caption || house.street" [attr.loading]="index === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="index === 0 ? 'high' : null" decoding="async" />
+            </button>
+          }
+        </div>
+        <div class="lx-strip" #strip (scroll)="onStripScroll()">
+          @for (photo of house.photos; track photo.id; let index = $index) {
+            <button type="button" class="lx-slide" (click)="openLightbox(index, $event)" [attr.aria-label]="'Open photo ' + (index + 1) + ': ' + photo.caption">
+              <img [src]="photo.url" [alt]="photo.caption || house.street" [attr.loading]="index === 0 ? 'eager' : 'lazy'" decoding="async" />
+            </button>
+          }
+        </div>
+        <div class="lx-gallery-foot">
+          <span class="lx-count" aria-hidden="true"><span class="lx-count-strip">{{ stripIndex() + 1 }} of {{ house.photos.length }}</span><span class="lx-count-grid">{{ house.photos.length }} photos</span></span>
+          @if (house.photos.length > 1) {
+            <button type="button" class="lx-all" (click)="openLightbox(0, $event)">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="5" height="5" rx="1"/><rect x="9.5" y="1.5" width="5" height="5" rx="1"/><rect x="1.5" y="9.5" width="5" height="5" rx="1"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/></svg>
+              See all {{ house.photos.length }} photos
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    <div class="lx-body wide">
+      <div class="lx-main">
+        <header class="lx-head">
+          <p class="lx-status"><span class="lx-dot" aria-hidden="true"></span>For sale<span class="lx-sep">·</span>Demo listing</p>
+          <div class="lx-headline-row">
+            <p class="lx-price">{{ house.price ? money(house.price) : 'Price to come' }}</p>
+            <ul class="lx-stats" aria-label="Key numbers">
+              <li><strong>{{ fact(house.beds) }}</strong> bd</li>
+              <li><strong>{{ fact(house.baths) }}</strong> ba</li>
+              <li><strong>{{ sqft(house.squareFeet) }}</strong> sq ft</li>
+            </ul>
+          </div>
+          <h1 class="lx-address">{{ house.street || 'Untitled listing' }}<span>{{ house.city }}{{ house.state ? ', ' + house.state : '' }} {{ house.postalCode }}</span></h1>
+          @if (result(); as payment) {
+            <p class="lx-est">Est. <strong>{{ money(payment.totalMonthly) }}</strong>/mo <a href="#payment">Payment details</a></p>
+          }
+          <div class="lx-head-actions">
+            <a class="btn" href="#showing">Schedule a showing</a>
+            <a class="btn btn-ghost" href="#ask">Ask a question</a>
+          </div>
+        </header>
+
+        <ul class="lx-keys" aria-label="At a glance">
+          <li><span class="lx-key-k">Type</span><span class="lx-key-v">Single-family</span></li>
+          <li><span class="lx-key-k">Built</span><span class="lx-key-v">{{ house.yearBuilt || 'Not set' }}</span></li>
+          <li><span class="lx-key-k">Lot</span><span class="lx-key-v">{{ house.lotAcres || 0 }} acres</span></li>
+          <li><span class="lx-key-k">Price per sq ft</span><span class="lx-key-v">{{ perSqft(house) }}</span></li>
+          @if (house.openHouses.length) {
+            <li><span class="lx-key-k">Open house</span><span class="lx-key-v">{{ shortWhen(house.openHouses[0].startsAt) }}</span></li>
+          }
+        </ul>
+
+        <section class="lx-section" id="overview">
+          <h2>Overview</h2>
+          @if (house.headline) { <p class="lx-lede">{{ house.headline }}</p> }
+          <p class="lx-prose">{{ house.description }}</p>
+        </section>
+
+        <section class="lx-section" id="facts">
+          <h2>Facts and features</h2>
+          <div class="lx-facts">
+            <div class="lx-fact-group">
+              <h3>The house</h3>
+              <dl>
+                <div><dt>Bedrooms</dt><dd>{{ fact(house.beds) }}</dd></div>
+                <div><dt>Bathrooms</dt><dd>{{ fact(house.baths) }}</dd></div>
+                <div><dt>Interior</dt><dd>{{ sqft(house.squareFeet) }} sq ft</dd></div>
+                <div><dt>Lot</dt><dd>{{ house.lotAcres || 0 }} acres</dd></div>
+                <div><dt>Year built</dt><dd>{{ house.yearBuilt || 'Not set' }}</dd></div>
+              </dl>
+            </div>
+            @for (group of featureGroups(); track group.name) {
+              <div class="lx-fact-group">
+                <h3>{{ group.name }}</h3>
+                <ul>
+                  @for (item of group.items; track item) { <li>{{ item }}</li> }
+                </ul>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="lx-section" id="daylight">
+          <h2>Daylight</h2>
+          <app-sun-study [squareFeet]="house.squareFeet" [detailed]="house.slug.startsWith('418-larkspur-way')" />
+        </section>
+
+        <section class="lx-section" id="neighborhood">
+          <h2>Neighbourhood</h2>
+          @if (house.latitude != null && house.longitude != null) {
+            <div #map class="map-frame" role="region" aria-label="Map of the neighbourhood around this demo listing"></div>
+            <p class="quiet lx-note">Map tiles © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a> contributors. The circle marks a general neighbourhood for this fictional listing, not a lot or an address.</p>
+          } @else {
+            <p class="quiet">The map appears after the address can be located.</p>
+          }
+          @if (house.neighborhood || house.schools || house.parks) {
+            <div class="lx-hood">
+              @if (house.neighborhood) {
+                <div><h3>The area</h3><p>{{ house.neighborhood }}</p></div>
+              }
+              @if (house.schools) {
+                <div><h3>Schools</h3><p>{{ house.schools }}</p></div>
+              }
+              @if (house.parks) {
+                <div><h3>Parks</h3><p>{{ house.parks }}</p></div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="lx-section" id="payment">
+          <h2>Monthly payment</h2>
+          <p class="quiet">Estimate only. A lender confirms the payment.</p>
+          <div class="mortgage">
+            <div class="form-grid">
+              <label class="field">Price<input type="number" min="0" [value]="price()" (input)="number('price', $event)" /></label>
+              <label class="field">Down payment<input type="number" min="0" [value]="down()" (input)="number('down', $event)" /></label>
+              <label class="field">Interest rate<input type="number" min="0" step="0.1" [value]="rate()" (input)="number('rate', $event)" /></label>
+              <label class="field">Term, years
+                <select [value]="term()" (change)="number('term', $event)">
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                </select>
+              </label>
+              <label class="field">Property tax per year<input type="number" min="0" [value]="tax()" (input)="number('tax', $event)" /></label>
+              <label class="field">Insurance per year<input type="number" min="0" [value]="insurance()" (input)="number('insurance', $event)" /></label>
+              <label class="field">HOA per month<input type="number" min="0" [value]="hoa()" (input)="number('hoa', $event)" /></label>
+            </div>
+            <div class="lx-pay">
+              @if (result(); as payment) {
+                <p class="eyebrow">Estimated monthly</p>
+                <p class="pay"><app-count [value]="payment.totalMonthly" [cents]="true" /></p>
+                <div class="lx-pay-row">
+                  <canvas #chart class="chart" aria-hidden="true"></canvas>
+                  <ul class="breakdown">
+                    <li><span><i class="sw sw-1"></i>Principal and interest</span><strong>{{ money(payment.monthlyPrincipalAndInterest, true) }}</strong></li>
+                    <li><span><i class="sw sw-2"></i>Property tax</span><strong>{{ money(payment.monthlyTax, true) }}</strong></li>
+                    <li><span><i class="sw sw-3"></i>Insurance</span><strong>{{ money(payment.monthlyInsurance, true) }}</strong></li>
+                    <li><span><i class="sw sw-4"></i>HOA</span><strong>{{ money(payment.monthlyHoa, true) }}</strong></li>
+                  </ul>
+                </div>
+              }
+              @if (calcError()) {
+                <p class="banner error" role="alert">{{ calcError() }}</p>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="lx-section" id="showing">
+          <h2>Tour this house</h2>
+          @if (house.openHouses.length) {
+            <ul class="lx-open">
+              @for (visit of house.openHouses; track visit.id) {
+                <li><span class="lx-open-tag">Open house</span><strong>{{ when(visit.startsAt) }} to {{ clock(visit.endsAt) }}</strong>@if (visit.notes) { <span class="quiet">{{ visit.notes }}</span> }</li>
+              }
+            </ul>
+          }
+          @if (groups().length === 0) {
+            <p class="quiet">No private showing times are posted yet.</p>
+          } @else {
+            <p class="quiet">Or book a private showing. Pick a day, then a time.</p>
+            <div class="lx-days" role="tablist" aria-label="Showing days">
+              @for (group of groups(); track group[0]; let gi = $index) {
+                <button type="button" class="lx-day" role="tab" [attr.aria-selected]="dayIndex() === gi" (click)="dayIndex.set(gi)">
+                  <span>{{ weekday(group[0]) }}</span><strong>{{ dayNum(group[0]) }}</strong><span>{{ monthShort(group[0]) }}</span>
+                </button>
+              }
+            </div>
+            @if (groups()[dayIndex()]; as group) {
+              <div class="slots" role="tabpanel" [attr.aria-label]="dayLabel(group[0])">
+                @for (slot of group[1]; track slot.startsAt) {
+                  <button type="button" class="slot" [disabled]="!slot.available" [attr.aria-pressed]="selectedSlot()?.startsAt === slot.startsAt" (click)="selectedSlot.set(slot)">{{ clock(slot.startsAt) }}{{ slot.available ? '' : ' taken' }}</button>
+                }
+              </div>
+            }
+            <form class="stack form-gap" (submit)="book($event)">
+              <div class="form-grid three">
+                <label class="field">Name<input [value]="showName()" (input)="showName.set($any($event.target).value)" required /></label>
+                <label class="field">Email<input type="email" [value]="showEmail()" (input)="showEmail.set($any($event.target).value)" required /></label>
+                <label class="field">Phone<input [value]="showPhone()" (input)="showPhone.set($any($event.target).value)" /></label>
+              </div>
+              <div><button class="btn" type="submit" [disabled]="sendingShow()">{{ selectedSlot() ? 'Book ' + when(selectedSlot()!.startsAt) : 'Book this time' }}</button></div>
+            </form>
+            @if (showNotice()) {
+              <p class="banner ok" role="status">{{ showNotice() }} @if (booked(); as showing) { <a [href]="showing.icsUrl">Download .ics</a> }</p>
+            }
+            @if (showError()) { <p class="banner error" role="alert">{{ showError() }}</p> }
+          }
+        </section>
+
+        <section class="lx-section" id="ask">
+          <h2>Ask about this house</h2>
+          <p class="quiet">Saved in the studio. Nothing is emailed.</p>
+          <form class="stack form-gap" (submit)="sendLead($event)">
+            <div class="form-grid">
+              <label class="field">Name<input [value]="leadName()" (input)="leadName.set($any($event.target).value)" required /></label>
+              <label class="field">Email<input type="email" [value]="leadEmail()" (input)="leadEmail.set($any($event.target).value)" required /></label>
+              <label class="field">Phone<input [value]="leadPhone()" (input)="leadPhone.set($any($event.target).value)" /></label>
+              <fieldset class="choice">
+                <legend>Pre-approved for a mortgage?</legend>
+                <label><input type="radio" name="preapproved" [checked]="preApproved() === true" (change)="preApproved.set(true)" /> Yes</label>
+                <label><input type="radio" name="preapproved" [checked]="preApproved() === false" (change)="preApproved.set(false)" /> No</label>
+              </fieldset>
+              <label class="field span-2">Message<textarea [value]="leadMessage()" (input)="leadMessage.set($any($event.target).value)"></textarea></label>
+            </div>
+            <div><button class="btn" type="submit" [disabled]="sendingLead()">Send message</button></div>
+          </form>
+          @if (leadNotice()) { <p class="banner ok" role="status">{{ leadNotice() }}</p> }
+          @if (leadError()) { <p class="banner error" role="alert">{{ leadError() }}</p> }
+        </section>
+
+        <p class="lx-credits quiet">
+          {{ photoNote(house) }}
+          @if (house.agentHeadshotCredit) {
+            Agent headshot by
+            @if (house.agentHeadshotCreditUrl) { <a [href]="house.agentHeadshotCreditUrl" rel="noopener">{{ house.agentHeadshotCredit }}</a> } @else { {{ house.agentHeadshotCredit }} }
+            on Unsplash.
+          }
+          The address, the agent, and the numbers on this page are fictional.
+        </p>
+      </div>
+
+      <aside class="lx-side" aria-label="Contact the agent">
+        <div class="lx-card glass">
+          <p class="lx-card-price">{{ money(house.price) }}</p>
+          @if (result(); as payment) { <p class="quiet">Est. {{ money(payment.totalMonthly) }}/mo</p> }
+          <div class="lx-card-actions">
+            <a class="btn" href="#showing">Schedule a showing</a>
+            <a class="btn btn-ghost" href="#ask">Ask a question</a>
+          </div>
+          <div class="lx-agent">
+            @if (house.agentHeadshotUrl) { <img class="lx-agent-img" [src]="house.agentHeadshotUrl" [alt]="house.agentName" loading="lazy" /> }
+            <div>
+              <p class="lx-agent-name">{{ house.agentName }}</p>
+              <p class="quiet">{{ house.agentBrokerage }}</p>
+            </div>
+          </div>
+          <p class="lx-agent-contact"><a [href]="'mailto:' + house.agentEmail">{{ house.agentEmail }}</a><span>{{ house.agentPhone }}</span></p>
+          @if (house.agentBio) { <p class="lx-agent-bio">{{ house.agentBio }}</p> }
+        </div>
+      </aside>
+    </div>
+
+    @if (lightbox() !== null) {
+      <div class="lb" [class.open]="lightboxFrame()" role="dialog" aria-modal="true" aria-label="Photographs">
+        <div class="lb-top">
+          <span class="lb-count">{{ lightbox()! + 1 }} / {{ house.photos.length }}</span>
+          <span class="lb-cap">{{ house.photos[lightbox()!].caption }}</span>
+          <button type="button" class="lb-close" #closeBtn (click)="closeLightbox()">Close</button>
+        </div>
+        <div class="lb-track" #track (scroll)="onTrackScroll()">
+          @for (photo of house.photos; track photo.id; let index = $index) {
+            <figure class="lb-slide"><img [src]="photo.url" [alt]="photo.caption || house.street" loading="lazy" decoding="async" /></figure>
+          }
+        </div>
+        @if (house.photos.length > 1) {
+          <button type="button" class="lb-nav lb-prev" (click)="stepLightbox(-1)" aria-label="Previous photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+          <button type="button" class="lb-nav lb-next" (click)="stepLightbox(1)" aria-label="Next photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        }
+      </div>
+    }
+  </article>
+}

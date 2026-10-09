@@ -1,0 +1,24 @@
+{
+  "/api": {
+    "target": "http://localhost:5080",
+    "secure": false
+  },
+  "/uploads": {
+    "target": "http://localhost:5080",
+    "secure": false
+  },
+  "/apps/ulric-listing-studio/api": {
+    "target": "http://localhost:5080",
+    "secure": false,
+    "pathRewrite": {
+      "^/apps/ulric-listing-studio": ""
+    }
+  },
+  "/apps/ulric-listing-studio/uploads": {
+    "target": "http://localhost:5080",
+    "secure": false,
+    "pathRewrite": {
+      "^/apps/ulric-listing-studio": ""
+    }
+  }
+}

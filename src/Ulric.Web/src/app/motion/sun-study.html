@@ -1,0 +1,139 @@
+<figure #fig class="sun-study" [attr.data-3d]="phase() || null" [class.is-lost]="lost()" [class.is-held]="held()" [class.live]="live()" [class.is-full]="full()" [class.is-active]="interactive()" [class.is-walk]="walking()">
+  <div class="sun-stage">
+    @if (detailed()) {
+      <picture class="sun-fallback sun-still">
+        <source media="(max-width: 599px)" [attr.srcset]="'3d/still-' + stillTheme() + '-phone.webp'" />
+        <img [src]="'3d/still-' + stillTheme() + '-desk.webp'" alt="The 3D model of the house at rest, rendered from the same scene: blue siding, grey roof and the front yard." decoding="async" loading="lazy" />
+      </picture>
+    } @else {
+      <svg class="sun-fallback" viewBox="0 0 320 180" role="img" aria-label="A simple house elevation shown while the daylight study loads.">
+        <line x1="16" y1="150" x2="304" y2="150" />
+        <polygon points="118,92 160,58 202,92" />
+        <rect x="124" y="92" width="72" height="58" />
+        <circle cx="246" cy="48" r="10" />
+      </svg>
+    }
+    @if (held()) {
+      <button type="button" class="sun-open3d" (click)="open3d()">Open 3D view</button>
+    } @else {
+      <canvas #view (click)="engage()" [attr.data-realism]="detailed() ? 'photo' : null" [attr.aria-label]="detailed() ? '3D model of the house with the sun moving across it. Click to explore.' : 'House massing with the sun moving across it'"></canvas>
+    }
+    <div #labels class="sun-labels" aria-hidden="true"></div>
+  </div>
+  <div class="sun-ui">
+    <div class="sun-bar">
+      @if (walking() && coarse) {
+        <div class="sun-joy" (pointerdown)="joyDown($event)" (pointermove)="joyMove($event)" (pointerup)="joyUp()" (pointercancel)="joyUp()" aria-hidden="true">
+          <span [style.transform]="joy() ? 'translate(' + joy()!.x * 24 + 'px,' + joy()!.y * 24 + 'px)' : null"></span>
+        </div>
+      }
+      @if (walking() && rooms().length) {
+        <label class="sun-rooms">
+          <span class="sr-only">Go to room</span>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 7.5 8 2.5l6 5M3.8 6.3V13.5h8.4V6.3" /></svg>
+          <select [value]="room()" (change)="goRoom($event)">
+            @for (r of rooms(); track r.key) {
+              <option [value]="r.key" [selected]="r.key === room()">{{ r.label }}</option>
+            }
+          </select>
+        </label>
+      } @else if (!walking()) {
+        <div class="sun-modes" role="group" aria-label="View">
+          @for (m of modes; track m.key) {
+            <button type="button" [attr.aria-pressed]="mode() === m.key" [disabled]="!live()" [title]="m.title" (click)="setMode(m.key)">{{ m.label }}</button>
+          }
+        </div>
+      }
+      <div class="sun-acts">
+        @if (detailed()) {
+          <button type="button" class="sun-btn" [disabled]="!live() && !held()" [attr.aria-pressed]="walking()" (click)="toggleWalk()" [title]="walking() ? 'Leave the walk-through' : 'Walk through the house'">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8.6" cy="2.6" r="1.4" /><path d="M6 14.5 7.6 9.8 6.4 7.6l2.6-2 1.2 2.6 2 .8M7.6 9.8l2.2 1.6.6 3.1M6.4 7.6 4 8.6" /></svg>
+            <span>{{ walking() ? 'Exit walk' : 'Walk' }}</span>
+          </button>
+        }
+        <button type="button" class="sun-btn" [disabled]="!live()" (click)="reset()" title="Reset view">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v2.8h2.8" /></svg>
+          <span>Reset</span>
+        </button>
+        <button type="button" class="sun-btn" [disabled]="!live() && !held()" (click)="toggleFull()" [attr.aria-label]="full() ? 'Exit full-screen 3D' : 'Explore 3D in full screen'">
+          @if (full()) {
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.5V6H2.5M10 2.5V6h3.5M6 13.5V10H2.5M10 13.5V10h3.5" /></svg>
+            <span>Close</span>
+          } @else {
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6V2.5H6M13.5 6V2.5H10M2.5 10v3.5H6M13.5 10v3.5H10" /></svg>
+            <span>Explore 3D</span>
+          }
+        </button>
+      </div>
+    </div>
+    <p class="sun-hint" aria-live="polite">
+      @if (walking()) {
+        @if (coarse) { Drag the view to look around. Use the pad to walk. } @else if (locked()) { WASD or arrow keys to walk, Shift to hurry. Esc frees the mouse. } @else { WASD or arrow keys to walk. Click the view to look around, double-click a spot to go there. }
+      } @else if (interactive()) {
+        @if (coarse) { Drag to orbit. Pinch to zoom, two fingers to pan, double-tap to focus. } @else { Drag to orbit, right-drag or Shift-drag to pan, scroll to zoom, double-click to focus. Esc or a click outside lets the page scroll again. }
+      } @else {
+        @if (coarse) { Tap Explore 3D to orbit, zoom and walk through the house. } @else { Click the model to orbit and zoom, or open Explore 3D for the full screen view. }
+      }
+    </p>
+  </div>
+  <div class="sun-controls">
+    <div class="sun-when">
+      @if (dial(); as d) {
+        <svg class="sun-dial" viewBox="-64 -64 128 128" aria-hidden="true">
+          <circle class="ring" r="40" />
+          <circle class="ring2" r="20" />
+          <text y="-53">N</text><text x="54">E</text><text y="54">S</text><text x="-54">W</text>
+          <polygon class="lot" [attr.points]="d.lot" />
+          <path class="path" [attr.d]="d.path" />
+          @if (d.sun; as p) {
+            <circle class="glow" [attr.cx]="p.x" [attr.cy]="p.y" r="10" />
+            <circle class="dot" [attr.cx]="p.x" [attr.cy]="p.y" r="5" />
+          }
+        </svg>
+      }
+      <p class="sun-clock"><b>{{ timeLabel() }}</b><span>{{ seasonLabel() }}</span></p>
+    </div>
+    <button class="sun-play" type="button" [disabled]="!live()" (click)="play()" [attr.aria-label]="state()?.playing ? 'Pause' : 'Play the day'">
+      @if (state()?.playing) {
+        <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5h3v11H3zM8 1.5h3v11H8z" /></svg>
+      } @else {
+        <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5v11l9-5.5z" /></svg>
+      }
+    </button>
+    <label class="sun-range">
+      <span class="ticks" aria-hidden="true">
+        <span>{{ ticks()?.lo }}</span><span>{{ ticks() ? 'noon ' + ticks()!.noon : '' }}</span><span>{{ ticks()?.hi }}</span>
+      </span>
+      <input type="range" min="0" max="1000" step="1" aria-label="Time of day" [disabled]="!live()"
+        [value]="position()" [attr.aria-valuetext]="timeLabel()" (input)="scrub($event)" />
+    </label>
+    <div class="sun-seasons" role="group" aria-label="Date">
+      @for (season of seasons; track season.key) {
+        <button type="button" [disabled]="!live()" [attr.aria-pressed]="state()?.season === season.key" (click)="pick(season.key)">{{ season.label }}</button>
+      }
+    </div>
+  </div>
+  <p class="sun-read" aria-live="polite">
+    @if (reading(); as r) {
+      {{ r.text }} @if (r.warm) { <span class="warm">{{ r.warm }}</span> } {{ r.shade }}
+    } @else {
+      &nbsp;
+    }
+  </p>
+  <figcaption class="quiet">
+    @if (detailed()) {
+      A modelled demo house. Sun path for the fictional town of Fernhollow (46.2° N) on the chosen date. The orientation is a demo assumption, not a survey of the lot.
+      <details class="sun-sources">
+        <summary>3D model sources</summary>
+        <p>Textures, furniture and sky are free CC0 assets. The rug pattern, wall art and the house itself are drawn in code.</p>
+        <ul>
+          @for (s of sources; track s.url) {
+            <li><a [href]="s.url" target="_blank" rel="noopener">{{ s.name }}</a> by {{ s.by }}, {{ s.src }}, {{ s.lic }}</li>
+          }
+        </ul>
+      </details>
+    } @else {
+      A simple massing sized from the square footage. Sun path for the fictional town of Fernhollow (46.2° N) on the chosen date. Not a survey of the lot.
+    }
+  </figcaption>
+</figure>

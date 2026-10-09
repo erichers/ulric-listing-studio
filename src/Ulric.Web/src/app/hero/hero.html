@@ -1,0 +1,61 @@
+@if (listing().theme === 'hearth') {
+  <section class="hero hero-hearth" [class.compact]="compact()">
+    <div class="hero-copy">
+      <p class="eyebrow">{{ listing().city }}{{ listing().state ? ', ' + listing().state : '' }}</p>
+      <h1>{{ listing().street || 'Untitled listing' }}</h1>
+      <hr class="rule" />
+      <p class="hero-price">{{ listing().price ? money(listing().price) : 'Price to come' }}</p>
+      @if (listing().headline) {
+        <p class="headline">{{ listing().headline }}</p>
+      }
+    </div>
+    @if (cover(); as photo) {
+      <img class="hero-media" [class.is-shown]="shown()" [style.--shift.px]="shift()" (load)="shown.set(true)" [src]="photo.url" [alt]="photo.caption || listing().street" />
+    } @else {
+      <div class="hero-fallback" aria-hidden="true"></div>
+    }
+  </section>
+} @else if (listing().theme === 'linen') {
+  <section class="hero hero-linen" [class.compact]="compact()">
+    <p class="eyebrow">{{ listing().city }}{{ listing().state ? ', ' + listing().state : '' }}</p>
+    <h1>{{ listing().street || 'Untitled listing' }}</h1>
+    <hr class="rule" />
+    <p class="hero-price">{{ listing().price ? money(listing().price) : 'Price to come' }}</p>
+    @if (listing().headline) {
+      <p class="headline">{{ listing().headline }}</p>
+    }
+    @if (cover(); as photo) {
+      <img class="hero-media" [class.is-shown]="shown()" [style.--shift.px]="shift()" (load)="shown.set(true)" [src]="photo.url" [alt]="photo.caption || listing().street" />
+    } @else {
+      <div class="hero-fallback" aria-hidden="true"></div>
+    }
+  </section>
+} @else {
+  <section class="hero hero-alder" [class.compact]="compact()">
+    @if (cover(); as photo) {
+      <img class="hero-media" [class.is-shown]="shown()" [style.--shift.px]="shift()" (load)="shown.set(true)" [src]="photo.url" [alt]="photo.caption || listing().street" />
+    }
+    <div class="scrim"></div>
+    <div class="hero-copy">
+      <p class="eyebrow light">{{ listing().city }}{{ listing().state ? ', ' + listing().state : '' }}</p>
+      <h1>{{ listing().street || 'Untitled listing' }}</h1>
+      <hr class="rule" />
+      <p class="hero-price">{{ listing().price ? money(listing().price) : 'Price to come' }}</p>
+      @if (listing().headline) {
+        <p class="headline">{{ listing().headline }}</p>
+      }
+    </div>
+  </section>
+}
+
+@if (!compact()) {
+  <div class="wide">
+    <dl class="ledger">
+      <div><dt>Beds</dt><dd>{{ fact(listing().beds) }}</dd></div>
+      <div><dt>Baths</dt><dd>{{ fact(listing().baths) }}</dd></div>
+      <div><dt>Square feet</dt><dd>{{ sqft(listing().squareFeet) }}</dd></div>
+      <div><dt>Lot</dt><dd>{{ listing().lotAcres || 0 }} ac</dd></div>
+      <div><dt>Built</dt><dd>{{ listing().yearBuilt || 'Not set' }}</dd></div>
+    </dl>
+  </div>
+}
